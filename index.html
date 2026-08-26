@@ -137,11 +137,30 @@ footer{max-width:1180px;margin:30px auto 0;padding:14px 22px;border-top:1px soli
     <h2>What you are looking at</h2>
     <p>The images come from ESA's <strong>Euclid</strong> space telescope. Besides taking pictures, Euclid records a spectrum for every object in its field of view. From those spectra we construct <strong>emission-line maps</strong>: images of a galaxy in the light of one spectral line only. The most important is <strong>Hα</strong>, emitted by gas that has been ionised by hot, young stars. Effectively, a Hα map shows where a galaxy is forming stars right now, not just where its stars already sit.</p>
     <p>We have built such maps for about 1,300 star-forming galaxies at redshifts 0.3 to 1 in the COSMOS field, drawn from the Khostovan et al. catalogue of Hα emitters. For each galaxy you also get maps in the other lines that fall in Euclid's wavelength range (Hβ, [OIII], [SII], [SIII], the Paschen series and more), plus two photometric images (VIS and NISP-Y band) that show the starlight.</p>
+    <h2>What the maps look like</h2>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin:16px 0 6px">
+      <figure style="margin:0;flex:1 1 240px;max-width:305px">
+        <img src="about_clean.png" alt="A clean Hα map: a single bright galaxy standing out from a smooth background" style="width:100%;border-radius:8px;display:block">
+        <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Clean.</strong> The galaxy's Hα emission stands out clearly — circle the bright knots and pick "Clean" for the quality.</figcaption>
+      </figure>
+      <figure style="margin:0;flex:1 1 240px;max-width:305px">
+        <img src="about_noisy.png" alt="A noisy map: bright specks scattered over the whole frame with no galaxy visible" style="width:100%;border-radius:8px;display:block">
+        <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Noise.</strong> Scattered specks everywhere, none of them sitting on the galaxy. If the galaxy still shows through, pick "Noisy"; if specks are all there is, like here, pick "Unusable".</figcaption>
+      </figure>
+      <figure style="margin:0;flex:1 1 240px;max-width:305px">
+        <img src="about_artifact.png" alt="An artifact: a bright diagonal streak crossing the frame, with a faint real galaxy near the centre" style="width:100%;border-radius:8px;display:block">
+        <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Artifact.</strong> The long diagonal streak is contamination from another object's spectrum, not emission — note the faint real galaxy near the centre. Pick "Artifact present".</figcaption>
+      </figure>
+    </div>
+    <figure style="margin:6px 0 16px">
+      <img src="about_multiline.png" alt="The same galaxy shown in Hα, [SII], [SIII] 9069, [SIII] 9531 and the VIS starlight image — emission visible at the same position in each line map" style="max-width:100%;border-radius:8px;display:block">
+      <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Emission in several lines.</strong> One galaxy seen in Hα, [SII] and both [SIII] maps — the emission sits at the same position as the starlight (VIS, right). This is what to tick in question 3, and you can circle clumps on those frames too.</figcaption>
+    </figure>
     <h2>Why we need you</h2>
     <p>An automated algorithm has already searched the Hα maps for clumps, but the maps are noisy, and no algorithm perfectly separates real clumps from noise peaks and instrumental artifacts. Human eyes are still better at this.</p>
     <p>Your marks are used in two ways. First, to check the automated catalogue: where several people independently circle the same spot, we can trust the detection; where nobody does, it was probably noise. Second, the marks become a training set for machine-learning clump finders, which need many examples of what people judge to be real. Along the way you may notice things no algorithm flags such as emission in unexpected lines, artifacts, mergers, oddities. Those are often the most interesting objects of all.</p>
     <h2>What to do</h2>
-    <p><strong>1 — Circle the clumps.</strong> On the Hα frame, click the centre of each compact bright knot and drag outward. Circles can be moved (drag), resized (drag the rim), and deleted. Real clumps sit <em>on</em> the galaxy — check the VIS frame to see where the galaxy is. Isolated specks far from the galaxy are noise; long diagonal streaks are contamination from other objects' spectra, not emission.</p>
+    <p><strong>1 — Circle the clumps.</strong> On the Hα frame, click the centre of each compact bright knot and drag outward. Circles can be moved (drag), resized (drag the rim), and deleted. Real clumps sit <em>on</em> the galaxy — check the VIS frame to see where the galaxy is. Isolated specks far from the galaxy are noise; long diagonal streaks are contamination from other objects' spectra, not emission. You can draw circles on <em>any</em> emission-line frame, not only Hα: if a clump shows up in [OIII], [SIII] or a Paschen line, flip to that frame and circle it there — every circle records which map it was drawn on.</p>
     <p><strong>2 — Rate the Hα map.</strong> Clean, noisy-but-usable, artifact-contaminated, or unusable.</p>
     <p><strong>3 — Tick other lines with emission.</strong> Flip through every frame; tick a line only when you see emission at the galaxy's position. Leaving boxes unticked is normal.</p>
     <p><strong>The contrast controls are yours.</strong> Faint clumps often appear when you lower the floor or raise the softness; hard stretches sharpen bright knots. The <strong>VIS blend</strong> slider fades the starlight image in under any emission-line frame, so you can check that a knot really sits on the galaxy. Adjusting these affects only your view, never the data.</p>

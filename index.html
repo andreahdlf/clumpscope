@@ -281,7 +281,6 @@ body{overflow-x:clip}
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px;line-height:1.5">
         <div><b style="color:var(--text)">The tiles.</b> <i>Classifications</i> is the total number of submissions; <i>galaxies started</i> is how many different galaxies have at least one; <i>retired</i> counts galaxies that have reached 5 classifications and are no longer shown to new visitors; <i>circles drawn</i> is the total number of clump circles; <i>classifiers</i> is the number of distinct classifier names.</div>
         <div><b style="color:var(--text)">Galaxy</b> — the Euclid source ID. Click any row to open that galaxy below the table and see everyone's circles overlaid (classifiers shown anonymously).</div>
-        <div><b style="color:var(--text)">z</b> — the galaxy's redshift, from the Khostovan catalogue.</div>
         <div><b style="color:var(--text)">Hα</b> — ✓ if this galaxy has an Hα map; — means Hα falls outside Euclid's wavelength range for its redshift, so the first frame is another line.</div>
         <div><b style="color:var(--text)">Class.</b> — how many people have classified this galaxy so far (it retires at 5).</div>
         <div><b style="color:var(--text)">Circles (med)</b> — the median number of circles drawn per classification: a robust estimate of how many clumps people see.</div>
@@ -289,7 +288,7 @@ body{overflow-x:clip}
         <div><b style="color:var(--text)">Disagreement</b> — 0 to 1: how much classifiers differ on this galaxy, combining the spread in their circle counts with how split the quality votes are. Shown once a galaxy has 2+ classifications; high values (red) mark galaxies worth a second look — tick "Sort by disagreement" to review those first.</div>
         <div><b style="color:var(--text)">Lines ticked</b> — the other emission lines people have reported seeing (up to the three most-ticked).</div>
         <div style="margin-top:4px"><b style="color:var(--text)">The downloads</b> (research team only, after sign-in):</div>
-        <div><b style="color:var(--text)">Classifications CSV</b> — one row per submitted classification: classifier name, quality answer, lines ticked, number of circles, notes, timestamp.</div>
+        <div><b style="color:var(--text)">Classifications CSV</b> — one row per submitted classification: classifier name, quality answer, lines ticked, number of circles, notes, timestamp, plus the galaxy&#8217;s redshift and coordinates (included only in the signed-in exports, never shown on the site).</div>
         <div><b style="color:var(--text)">Marks CSV</b> — one row per individual circle: which frame it was drawn on, the centre in 101-px stamp coordinates (col = x+20, row = 61−y+20, origin bottom-left), and the radius in pixels and arcsec.</div>
         <div><b style="color:var(--text)">Consensus catalogue CSV</b> — circles from different people are clustered, and clusters marked by at least two distinct classifiers are kept: one row per agreed clump with the mean centre and radius plus agreement counts, ready to compare against the automated catalogue.</div>
         <div><b style="color:var(--text)">ML labels CSV</b> — the same consensus clumps written as YOLO-style normalised bounding boxes, ready to train a machine-learning clump finder.</div>
@@ -299,7 +298,7 @@ body{overflow-x:clip}
       <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="sortdis" style="accent-color:var(--accent);margin-right:6px">Sort by disagreement (review contentious galaxies first)</label>
     </div>
     <div class="tablewrap"><table>
-      <thead><tr><th>Galaxy</th><th>z</th><th>Hα</th><th>Class.</th><th>Circles (med)</th><th>Quality consensus</th><th>Disagreement</th><th>Lines ticked</th></tr></thead>
+      <thead><tr><th>Galaxy</th><th>Hα</th><th>Class.</th><th>Circles (med)</th><th>Quality consensus</th><th>Disagreement</th><th>Lines ticked</th></tr></thead>
       <tbody id="rtable"></tbody>
     </table></div>
     <div id="inspect">
@@ -477,7 +476,7 @@ function pickSubject(skipIdx){
 }
 function setFrame(fi){ curFi=fi; const fr=cur.fr[fi]; if(document.getElementById('delmark')) updateDelBtn();
   $('frname').textContent=fr.lb;
-  $('frmeta').textContent=fr.t==='el'?(fr.obs?`obs ${fr.obs} Å`:''):'broadband';
+  $('frmeta').textContent=fr.t==='el'?'emission line':'broadband';
   $('frcount').textContent=`frame ${fi+1}/${cur.fr.length} · ${cur.sid}`;
   [...$('strip').children].forEach((c,i)=>c.className=i===fi?'on':'');
   syncCtl(); paint();
@@ -640,7 +639,7 @@ function renderResults(){
     const tr=document.createElement('tr');
     const pill=qmode===0?'g':(qmode===3?'b':'w');
     const dpill=dis>=0.5?'b':(dis>=0.25?'w':'g');
-    tr.innerHTML=`<td style="font-family:var(--mono);font-size:12px">${subj.sid}</td><td>${subj.z}</td>
+    tr.innerHTML=`<td style="font-family:var(--mono);font-size:12px">${subj.sid}</td>
       <td>${subj.ha?'✓':'—'}</td><td>${r.n}</td><td>${(+r.mm).toFixed(0)}</td>
       <td><span class="pill ${pill}">${fmtQ(qmode)}</span></td>
       <td><span class="pill ${dpill}">${+r.n<2?'—':dis.toFixed(2)}</span></td>
@@ -662,7 +661,7 @@ async function inspect(s){
   drawStrip($('i-strip'),subj,0,fi=>{iFi=fi; ipaint();});
   let rows=[];
   try{ rows=await rpc('public_marks',{subject:s}); }catch(e){}
-  iMarks=[]; const det=[`<div>z = ${subj.z} · RA ${subj.ra} · Dec ${subj.dec} · ${subj.ha?'has Hα':'no Hα frame'}</div>`];
+  iMarks=[]; const det=[`<div>${subj.ha?'has Hα':'no Hα frame'}</div>`];
   rows.forEach(r=>{ const col=USERCOLS[(+r.ui-1)%USERCOLS.length];
     (r.m||[]).forEach(m=>iMarks.push({f:m[0],x:m[1],y:m[2],r:m[3],col}));
     const ls=(r.l||[]).map(l=>l===NONE_OPT?'none':l).join(', ');
@@ -677,7 +676,7 @@ function ipaint(){
   const subj=SUBJ[iSubj];
   renderFrame(ictx,subj,iFi,params,iMarks,-1);
   const fr=subj.fr[iFi];
-  $('i-frname').textContent=fr.lb; $('i-frmeta').textContent=fr.t==='el'?(fr.obs?`obs ${fr.obs} Å`:''):'broadband';
+  $('i-frname').textContent=fr.lb; $('i-frmeta').textContent=fr.t==='el'?'emission line':'broadband';
   $('frcount2').textContent=`frame ${iFi+1}/${subj.fr.length}`;
   [...$('i-strip').children].forEach((c,i)=>c.className=i===iFi?'on':'');
 }
@@ -686,8 +685,8 @@ $('i-nextf').onclick=()=>{ if(iSubj!=null){ iFi=(iFi+1)%SUBJ[iSubj].fr.length; i
 /* ================= exports (research team only) ================= */
 function csvEsc(v){ v=String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
 function classCSV(rows){
-  const head='user,source_id,z,quality,lines,n_marks,notes,timestamp_iso';
-  const out=rows.map(r=>{const s=SUBJ[r.s]; return [r.u,r.sid,s?s.z:'',fmtQ(r.q),
+  const head='user,source_id,z,ra,dec,quality,lines,n_marks,notes,timestamp_iso';
+  const out=rows.map(r=>{const p=srcOf(r.s); return [r.u,r.sid,p.z,p.ra,p.dec,fmtQ(r.q),
     (r.l||[]).map(l=>l===NONE_OPT?'none':l).join('; '),(r.m||[]).length,r.n||'',new Date(+r.t).toISOString()].map(csvEsc).join(',');});
   return head+'\n'+out.join('\n')+'\n';
 }
@@ -722,16 +721,16 @@ function consensusClumps(rows){
       if(users.size<need) continue;
       const cx=ms.reduce((a,m)=>a+m.x,0)/ms.length, cy=ms.reduce((a,m)=>a+m.y,0)/ms.length,
             cr=ms.reduce((a,m)=>a+m.r,0)/ms.length, f=ms[0].f;
-      out.push({sid:subj.sid, z:subj.z, f, lb:subj.fr[f]?subj.fr[f].lb:'', cx, cy, cr,
+      out.push({s, sid:subj.sid, f, lb:subj.fr[f]?subj.fr[f].lb:'', cx, cy, cr,
                 nu:users.size, nc:nUsers, nm:ms.length});
     }
   });
   return out;
 }
 function consensusCSV(rows){
-  const head='source_id,z,frame_index,frame_label,x_col_101px,y_row_101px,r_px,r_arcsec,n_users_agreeing,n_classifiers,n_marks_in_cluster';
-  const out=consensusClumps(rows).map(c=>[c.sid,c.z,c.f,c.lb,(c.cx+20).toFixed(2),(61-c.cy+20).toFixed(2),
-    c.cr.toFixed(2),(c.cr*0.1).toFixed(3),c.nu,c.nc,c.nm].map(csvEsc).join(','));
+  const head='source_id,z,ra,dec,frame_index,frame_label,x_col_101px,y_row_101px,r_px,r_arcsec,n_users_agreeing,n_classifiers,n_marks_in_cluster';
+  const out=consensusClumps(rows).map(c=>{const p=srcOf(c.s); return [c.sid,p.z,p.ra,p.dec,c.f,c.lb,(c.cx+20).toFixed(2),(61-c.cy+20).toFixed(2),
+    c.cr.toFixed(2),(c.cr*0.1).toFixed(3),c.nu,c.nc,c.nm].map(csvEsc).join(',');});
   return head+'\n'+out.join('\n')+'\n';
 }
 function mlCSV(rows){
@@ -762,6 +761,14 @@ async function tryLogin(){
 }
 $('logout').onclick=()=>{ TOKEN=null; FULL=null; $('logout').style.display='none';
   $('whoami').textContent='Research-team sign-in required for exports.'; };
+let SRCMAP=null;
+async function fetchSources(){
+  const r=await fetch(`${SUPA_URL}/rest/v1/clumpscope_sources?select=s,z,ra,dec&limit=5000`,
+    {headers:supaHeaders(false,TOKEN)});
+  if(!r.ok) throw new Error('sources '+r.status);
+  const m=new Map(); (await r.json()).forEach(o=>m.set(+o.s,o)); return m;
+}
+function srcOf(s){ const o=SRCMAP&&SRCMAP.get(+s); return o||{z:'',ra:'',dec:''}; }
 async function fetchFull(){
   const r=await fetch(`${SUPA_URL}/rest/v1/clumpscope?select=u,s,sid,q,l,m,n,t&limit=200000`,
     {headers:supaHeaders(false,TOKEN)});
@@ -769,7 +776,7 @@ async function fetchFull(){
   return r.json();
 }
 async function doDownload(kind){
-  try{ FULL=await fetchFull(); }
+  try{ FULL=await fetchFull(); SRCMAP=await fetchSources(); }
   catch(e){ TOKEN=null; $('logout').style.display='none';
     $('whoami').textContent='Research-team sign-in required for exports.';
     flashBanner('Session expired or access denied — sign in again.'); return; }

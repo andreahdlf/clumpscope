@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClumpScope</title>
+<meta name="description" content="Help astronomers find star-forming clumps in Euclid Hα emission-line maps.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#0B1120; --panel:#131B2C; --panel2:#1A2438; --inset:#0E1526;
+  --line:rgba(233,238,247,.09); --text:#E9EEF7; --muted:#8C97AC; --faint:#5A6478;
+  --accent:#E8A855; --accent-dim:#8a6531; --good:#54C08F; --bad:#E26D6D; --mark:#FF5252;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --disp:'Chakra Petch',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html{color-scheme:dark}
+body{background:var(--bg);color:var(--text);font:15px/1.55 'IBM Plex Sans',system-ui,sans-serif;min-height:100vh}
+a{color:var(--accent)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:6px;padding:7px 14px}
+button:hover{border-color:var(--accent-dim)}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#171004;font-weight:600}
+button.primary:hover{filter:brightness(1.08)}
+button:disabled{opacity:.45;cursor:default}
+header{display:flex;align-items:center;gap:18px;padding:10px 22px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:20;flex-wrap:wrap}
+.brand{font-family:var(--disp);font-weight:700;font-size:19px;letter-spacing:.04em}
+.brand em{color:var(--accent);font-style:normal}
+.chip{font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 10px;white-space:nowrap}
+nav{display:flex;gap:4px;margin-left:8px}
+nav button{background:none;border:none;color:var(--muted);padding:8px 14px;font-weight:500;border-radius:6px}
+nav button.on{color:var(--text);background:var(--panel2)}
+#userbox{margin-left:auto;display:flex;align-items:center;gap:8px}
+#userbox input{background:var(--inset);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 10px;width:150px}
+main{max-width:1180px;margin:0 auto;padding:22px}
+.banner{background:#3a2f16;border:1px solid #6b5626;color:#ffd894;border-radius:8px;padding:9px 14px;margin-bottom:16px;font-size:13.5px;display:none}
+h1,h2,h3{font-family:var(--disp);text-wrap:balance}
+h2{font-size:21px;margin:26px 0 10px}
+h2:first-child{margin-top:0}
+.prose{max-width:70ch}
+.prose p{margin:0 0 12px;color:#c8d1e0}
+.prose strong{color:var(--text)}
+.kbd{font-family:var(--mono);font-size:12px;background:var(--inset);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 6px}
+#classify{display:none;grid-template-columns:minmax(0,566px) minmax(280px,1fr);gap:22px;align-items:start}
+.viewwrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+.framehead{display:flex;align-items:baseline;gap:10px;padding:2px 4px 8px}
+#frname{font-family:var(--disp);font-weight:600;font-size:18px}
+#frmeta{font-family:var(--mono);font-size:12px;color:var(--muted)}
+#frcount{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--faint)}
+.canvasbox{position:relative;width:100%;aspect-ratio:1;background:#000;border-radius:6px;overflow:hidden}
+#view{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#loadveil{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(11,17,32,.8);font-family:var(--mono);font-size:13px;color:var(--muted)}
+.stripwrap{display:flex;align-items:center;gap:6px;margin-top:10px}
+#strip{display:flex;gap:5px;overflow-x:auto;padding:2px;flex:1}
+#strip canvas{width:42px;height:42px;border-radius:4px;border:2px solid transparent;cursor:pointer;flex:none}
+#strip canvas.on{border-color:var(--accent)}
+.navb{padding:4px 10px;font-size:16px;line-height:1}
+.controls{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:13px}
+.controls label{color:var(--muted)}
+.controls input[type=range]{width:100%;accent-color:var(--accent)}
+.controls .val{font-family:var(--mono);font-size:12px;color:var(--text);min-width:44px;text-align:right}
+.ctlrow{grid-column:1/-1;display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:2px}
+.ctlrow .hint{font-size:12px;color:var(--faint)}
+.task{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:16px}
+.task h3{font-size:15px;letter-spacing:.02em;margin-bottom:6px}
+.task .step{border-bottom:1px solid var(--line);padding-bottom:14px}
+.task .step:last-child{border-bottom:none;padding-bottom:0}
+#marklist{display:flex;flex-direction:column;gap:5px;font-size:13px}
+#marklist .mk{display:flex;align-items:center;gap:8px;background:var(--inset);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+#marklist .mk.on{border-color:var(--mark)}
+#marklist .mk button{padding:0 7px;border:none;background:none;color:var(--muted);font-size:15px}
+#marklist .dot{width:9px;height:9px;border-radius:50%;background:var(--mark);flex:none}
+.qopt{display:block;margin:4px 0;padding:7px 10px;border:1px solid var(--line);border-radius:7px;cursor:pointer;font-size:13.5px}
+.qopt:has(input:checked){border-color:var(--accent);background:rgba(232,168,85,.08)}
+.qopt input{accent-color:var(--accent);margin-right:8px}
+#linegrid{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;font-size:12.5px}
+#linegrid label{display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:5px;cursor:pointer;color:#c8d1e0}
+#linegrid label:hover{background:var(--panel2)}
+#linegrid input{accent-color:var(--accent)}
+#linegrid label.none{grid-column:1/-1;border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin-top:4px}
+#notes{width:100%;background:var(--inset);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:7px 9px;font:13px/1.4 'IBM Plex Sans',sans-serif;resize:vertical;min-height:34px}
+.submitrow{display:flex;gap:10px;align-items:center}
+.submitrow .primary{flex:1;padding:11px}
+#progress{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.pbar{height:5px;background:var(--inset);border-radius:99px;overflow:hidden;margin-top:6px}
+.pbar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+#results{display:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.tile b{display:block;font:600 26px/1.1 var(--disp);font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.dlrow{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-family:var(--mono);font-weight:500;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--panel2)}
+.tablewrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:520px}
+.pill{font-family:var(--mono);font-size:11.5px;border-radius:999px;padding:1px 9px;border:1px solid var(--line)}
+.pill.g{color:var(--good);border-color:rgba(84,192,143,.4)}
+.pill.w{color:var(--accent);border-color:rgba(232,168,85,.4)}
+.pill.b{color:var(--bad);border-color:rgba(226,109,109,.4)}
+#inspect{display:none;margin-top:20px;gap:22px;grid-template-columns:minmax(0,566px) minmax(260px,1fr);align-items:start}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;max-width:680px;width:92%;padding:18px}
+dialog::backdrop{background:rgba(4,8,18,.7)}
+footer{max-width:1180px;margin:30px auto 0;padding:14px 22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--faint)}
+@media(max-width:960px){#classify,#inspect{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:no-preference){nav button,button.primary{transition:background .15s,color .15s,filter .15s}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Clump<em>Scope</em></div>
+  <span class="chip">1,292 galaxies · Euclid × COSMOS</span>
+  <nav>
+    <button id="tb-about" onclick="showTab('about')">About</button>
+    <button id="tb-classify" class="on" onclick="showTab('classify')">Classify</button>
+    <button id="tb-results" onclick="showTab('results')">Results</button>
+  </nav>
+  <div id="userbox">
+    <label for="uname" style="font-size:12.5px;color:var(--muted)">Classifying as</label>
+    <input id="uname" placeholder="your name" maxlength="24" autocomplete="off">
+  </div>
+</header>
+
+<main>
+  <div class="banner" id="banner"></div>
+
+  <section id="about" class="prose" style="display:none">
+    <h1 style="font-size:26px;margin-bottom:14px">Hunting star-forming clumps in Euclid Hα maps</h1>
+    <p>Galaxies at earlier cosmic times were gas-rich and lumpy, forming stars in giant knots — <strong>star-forming clumps</strong> — rather than evenly across a disk. How clumps form, how long they live, and whether they migrate inwards to build the central bulge are open questions.</p>
+    <p>The images here come from ESA's <strong>Euclid</strong> space telescope. From its slitless spectroscopy we build <strong>emission-line maps</strong>: images of a galaxy in the light of one spectral line. The first frame is always <strong>Hα</strong> where available, which traces gas ionised by hot young stars — it shows where the galaxy is forming stars right now. The other frames are maps in other lines, plus two broadband images (VIS, NISP-Y) that show the starlight. The sample: <strong>1,292 galaxies</strong> at redshift 0.3–0.5 from the Khostovan Hα-emitter catalogue in the COSMOS field.</p>
+    <h2>What to do</h2>
+    <p><strong>1 — Circle the clumps.</strong> On the Hα frame, click the centre of each compact bright knot and drag outward. Circles can be moved (drag), resized (drag the rim), and deleted. Real clumps sit <em>on</em> the galaxy — check the VIS frame to see where the galaxy is. Isolated specks far from the galaxy are noise; long diagonal streaks are contamination from other objects' spectra, not emission.</p>
+    <p><strong>2 — Rate the Hα map.</strong> Clean, noisy-but-usable, artifact-contaminated, or unusable.</p>
+    <p><strong>3 — Tick other lines with emission.</strong> Flip through every frame; tick a line only when you see emission at the galaxy's position. The list shows exactly the line maps this galaxy has — leaving boxes unticked is normal.</p>
+    <p><strong>The contrast controls are yours.</strong> Faint clumps often appear when you lower the floor or raise the softness; hard stretches sharpen bright knots. The <strong>VIS blend</strong> slider fades the starlight image in under any emission-line frame, so you can check that a knot really sits on the galaxy. Adjusting these affects only your view, never the data.</p>
+    <h2>Shortcuts</h2>
+    <p><span class="kbd">←</span> <span class="kbd">→</span> flip frames &nbsp; <span class="kbd">1</span>–<span class="kbd">4</span> map quality &nbsp; <span class="kbd">Backspace</span> delete selected circle &nbsp; <span class="kbd">Enter</span> submit</p>
+    <h2>Where your clicks go</h2>
+    <p>Each galaxy is shown to five people. Agreements between classifiers verify an automatically-produced clump catalogue, and the circles become a training set for machine-learning clump finders. Live results are in the Results tab; raw-data exports are reserved for the research team. This project is run by Andrea Henderson de la Fuente (University of Oxford) with the Euclid Consortium.</p>
+  </section>
+
+  <section id="classify">
+    <div class="viewwrap">
+      <div class="framehead"><span id="frname">Loading the sample…</span><span id="frmeta"></span><span id="frcount"></span></div>
+      <div class="canvasbox"><canvas id="view" width="549" height="549"></canvas><div id="loadveil">loading galaxy…</div></div>
+      <div class="stripwrap">
+        <button class="navb" id="prevf" title="previous frame">‹</button>
+        <div id="strip"></div>
+        <button class="navb" id="nextf" title="next frame">›</button>
+      </div>
+      <div class="controls">
+        <label for="c-floor">Floor</label><input type="range" id="c-floor" min="0" max="40" step="1"><span class="val" id="v-floor"></span>
+        <label for="c-ceil">Ceiling</label><input type="range" id="c-ceil" min="25" max="250" step="1"><span class="val" id="v-ceil"></span>
+        <label for="c-soft">Softness</label><input type="range" id="c-soft" min="5" max="100" step="1"><span class="val" id="v-soft"></span>
+        <label for="c-blend">VIS blend</label><input type="range" id="c-blend" min="0" max="80" step="1" value="0"><span class="val" id="v-blend"></span>
+        <div class="ctlrow">
+          <span class="hint">floor in σ above background · VIS blend fades the starlight image under emission-line frames</span>
+          <button id="c-reset" style="padding:4px 12px;font-size:12.5px">Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="task">
+      <div class="step">
+        <h3>1 · Circle every clump <span style="color:var(--faint);font-weight:400">(drag on the image — usually on Hα)</span></h3>
+        <div id="marklist"><span style="color:var(--faint);font-size:13px" id="nomarks">No circles yet. If you see no clumps, that's a valid answer.</span></div>
+      </div>
+      <div class="step">
+        <h3>2 · How is the Hα map?</h3>
+        <div id="qopts"></div>
+      </div>
+      <div class="step">
+        <h3>3 · Emission in other lines? <span style="color:var(--faint);font-weight:400">(tick all that apply)</span></h3>
+        <div id="linegrid"></div>
+      </div>
+      <div class="step">
+        <h3>Notes <span style="color:var(--faint);font-weight:400">(optional)</span></h3>
+        <textarea id="notes" rows="1" placeholder="mergers, oddities, doubts…"></textarea>
+      </div>
+      <div>
+        <div class="submitrow">
+          <button class="primary" id="submit">Submit &amp; next</button>
+          <button id="skip" title="Show another galaxy without saving">Skip</button>
+        </div>
+        <div id="progress" style="margin-top:10px"></div>
+        <div class="pbar"><i id="pfill" style="width:0%"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="results">
+    <div class="tiles">
+      <div class="tile"><b id="r-cls">0</b><span>classifications</span></div>
+      <div class="tile"><b id="r-subj">0</b><span>galaxies started</span></div>
+      <div class="tile"><b id="r-done">0</b><span>retired (≥5)</span></div>
+      <div class="tile"><b id="r-marks">0</b><span>circles drawn</span></div>
+      <div class="tile"><b id="r-users">0</b><span>classifiers</span></div>
+    </div>
+    <div class="dlrow" id="dlrow">
+      <button class="primary dlbtn" data-kind="class">Classifications CSV</button>
+      <button class="primary dlbtn" data-kind="marks">Marks CSV</button>
+      <button class="primary dlbtn" data-kind="consensus">Consensus catalogue CSV</button>
+      <button class="primary dlbtn" data-kind="ml">ML labels CSV</button>
+      <span id="whoami" style="font-size:12.5px;color:var(--faint)">Research-team sign-in required for exports.</span>
+      <button id="logout" style="display:none;padding:4px 12px;font-size:12.5px">Sign out</button>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+      <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="sortdis" style="accent-color:var(--accent);margin-right:6px">Sort by disagreement (review contentious galaxies first)</label>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Galaxy</th><th>z</th><th>Hα</th><th>Class.</th><th>Circles (med)</th><th>Quality consensus</th><th>Disagreement</th><th>Lines ticked</th></tr></thead>
+      <tbody id="rtable"></tbody>
+    </table></div>
+    <div id="inspect">
+      <div class="viewwrap">
+        <div class="framehead"><span id="i-frname">—</span><span id="i-frmeta"></span><span id="frcount2" style="margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--faint)"></span></div>
+        <div class="canvasbox"><canvas id="iview" width="549" height="549"></canvas></div>
+        <div class="stripwrap">
+          <button class="navb" id="i-prevf">‹</button><div id="i-strip" style="display:flex;gap:5px;overflow-x:auto;padding:2px;flex:1"></div><button class="navb" id="i-nextf">›</button>
+        </div>
+      </div>
+      <div class="task">
+        <h3 id="i-title">Inspect</h3>
+        <div id="i-detail" style="font-size:13px;color:#c8d1e0;display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>ClumpScope · Euclid Hα star-forming clumps · University of Oxford — thank you for classifying.</footer>
+
+<dialog id="logindlg" style="max-width:380px">
+  <h3 style="margin-bottom:8px">Research-team sign-in</h3>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Data exports are limited to the project team.</p>
+  <input id="lemail" type="email" placeholder="email" autocomplete="username" style="width:100%;background:var(--inset);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:8px 10px;margin-bottom:8px">
+  <input id="lpass" type="password" placeholder="password" autocomplete="current-password" style="width:100%;background:var(--inset);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:8px 10px"
+    onkeydown="if(event.key==='Enter')tryLogin()">
+  <p id="lerr" style="display:none;color:var(--bad);font-size:12.5px;margin-top:8px">Sign-in failed — check the email and password.</p>
+  <div style="text-align:right;margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+    <button onclick="document.getElementById('logindlg').close()">Cancel</button>
+    <button class="primary" id="loginbtn" onclick="tryLogin()">Sign in</button>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+/* ================= config ================= */
+const SUPA_URL='https://szatuxkegvbksacnyomd.supabase.co', SUPA_KEY='sb_publishable_uGUI3VcHNR6MKicNFl7jRQ_l_SmCAEY';
+const RETIRE=5, SCALE=9;
+let T=61, COLS=32, VW=T*SCALE;
+const QUALITIES=['Clean — galaxy emission clearly visible','Noisy, but the galaxy is still visible','Artifact present (bright streak, stripe, or edge glow)','Unusable — no signal, or overwhelmed by noise'];
+const NONE_OPT='No — emission only in the first frame';
+const VIRIDIS=Uint8Array.from([68,1,84,68,2,86,69,4,87,69,5,89,70,7,90,70,8,92,70,10,93,70,11,94,71,13,96,71,14,97,71,16,99,71,17,100,71,19,101,72,20,103,72,22,104,72,23,105,72,24,106,72,26,108,72,27,109,72,28,110,72,29,111,72,31,112,72,32,113,72,33,115,72,35,116,72,36,117,72,37,118,72,38,119,72,40,120,72,41,121,71,42,122,71,44,122,71,45,123,71,46,124,71,47,125,70,48,126,70,50,126,70,51,127,70,52,128,69,53,129,69,55,129,69,56,130,68,57,131,68,58,131,68,59,132,67,61,132,67,62,133,66,63,133,66,64,134,66,65,134,65,66,135,65,68,135,64,69,136,64,70,136,63,71,136,63,72,137,62,73,137,62,74,137,62,76,138,61,77,138,61,78,138,60,79,138,60,80,139,59,81,139,59,82,139,58,83,139,58,84,140,57,85,140,57,86,140,56,88,140,56,89,140,55,90,140,55,91,141,54,92,141,54,93,141,53,94,141,53,95,141,52,96,141,52,97,141,51,98,141,51,99,141,50,100,142,50,101,142,49,102,142,49,103,142,49,104,142,48,105,142,48,106,142,47,107,142,47,108,142,46,109,142,46,110,142,46,111,142,45,112,142,45,113,142,44,113,142,44,114,142,44,115,142,43,116,142,43,117,142,42,118,142,42,119,142,42,120,142,41,121,142,41,122,142,41,123,142,40,124,142,40,125,142,39,126,142,39,127,142,39,128,142,38,129,142,38,130,142,38,130,142,37,131,142,37,132,142,37,133,142,36,134,142,36,135,142,35,136,142,35,137,142,35,138,141,34,139,141,34,140,141,34,141,141,33,142,141,33,143,141,33,144,141,33,145,140,32,146,140,32,146,140,32,147,140,31,148,140,31,149,139,31,150,139,31,151,139,31,152,139,31,153,138,31,154,138,30,155,138,30,156,137,30,157,137,31,158,137,31,159,136,31,160,136,31,161,136,31,161,135,31,162,135,32,163,134,32,164,134,33,165,133,33,166,133,34,167,133,34,168,132,35,169,131,36,170,131,37,171,130,37,172,130,38,173,129,39,173,129,40,174,128,41,175,127,42,176,127,44,177,126,45,178,125,46,179,124,47,180,124,49,181,123,50,182,122,52,182,121,53,183,121,55,184,120,56,185,119,58,186,118,59,187,117,61,188,116,63,188,115,64,189,114,66,190,113,68,191,112,70,192,111,72,193,110,74,193,109,76,194,108,78,195,107,80,196,106,82,197,105,84,197,104,86,198,103,88,199,101,90,200,100,92,200,99,94,201,98,96,202,96,99,203,95,101,203,94,103,204,92,105,205,91,108,205,90,110,206,88,112,207,87,115,208,86,117,208,84,119,209,83,122,209,81,124,210,80,127,211,78,129,211,77,132,212,75,134,213,73,137,213,72,139,214,70,142,214,69,144,215,67,147,215,65,149,216,64,152,216,62,155,217,60,157,217,59,160,218,57,162,218,55,165,219,54,168,219,52,170,220,50,173,220,48,176,221,47,178,221,45,181,222,43,184,222,41,186,222,40,189,223,38,192,223,37,194,223,35,197,224,33,200,224,32,202,225,31,205,225,29,208,225,28,210,226,27,213,226,26,216,226,25,218,227,25,221,227,24,223,227,24,226,228,24,229,228,25,231,228,25,234,229,26,236,229,27,239,229,28,241,229,29,244,230,30,246,230,32,248,230,33,251,231,35,253,231,37]);
+/* ================= data state ================= */
+let SUBJ=[], SUMMARY=new Map(), TOTALS=null, TOKEN=null, FULL=null;
+let MYDONE=new Set(); try{ MYDONE=new Set(JSON.parse(localStorage.getItem('cs_mine')||'[]')); }catch(e){}
+let user=''; try{ user=localStorage.getItem('cs_user')||''; }catch(e){}
+/* ================= supabase ================= */
+function supaHeaders(json,tok){ const h={apikey:SUPA_KEY}; const b=tok||(SUPA_KEY.startsWith('ey')?SUPA_KEY:null); if(b) h.Authorization='Bearer '+b;
+  if(json){ h['Content-Type']='application/json'; } return h; }
+async function rpc(name,args){
+  const r=await fetch(`${SUPA_URL}/rest/v1/rpc/${name}`,{method:'POST',headers:supaHeaders(true),body:JSON.stringify(args||{})});
+  if(!r.ok) throw new Error(name+' '+r.status);
+  return r.json();
+}
+async function supaPush(rec){
+  const r=await fetch(`${SUPA_URL}/rest/v1/clumpscope`,{method:'POST',
+    headers:{...supaHeaders(true),Prefer:'return=minimal'},
+    body:JSON.stringify(rec)});
+  if(!r.ok) throw new Error('push '+r.status);
+}
+async function refreshSummary(){
+  const rows=await rpc('public_summary');
+  SUMMARY=new Map(rows.map(r=>[r.s,r]));
+  const t=await rpc('public_totals');
+  TOTALS=Array.isArray(t)?t[0]:t;
+}
+function queuePush(rec){ try{ const q=JSON.parse(localStorage.getItem('cs_q')||'[]'); q.push(rec); localStorage.setItem('cs_q',JSON.stringify(q)); }catch(e){} }
+async function drainQueue(){
+  let q=[]; try{ q=JSON.parse(localStorage.getItem('cs_q')||'[]'); }catch(e){}
+  const left=[];
+  for(const rec of q){ try{ await supaPush(rec); }catch(e){ left.push(rec); } }
+  try{ localStorage.setItem('cs_q',JSON.stringify(left)); }catch(e){}
+  return left.length;
+}
+/* ================= atlas ================= */
+const ATLAS={}, ATLASP={}, tileCache=new Map();
+function ensureAtlas(n){
+  if(ATLAS[n]) return Promise.resolve();
+  if(!ATLASP[n]) ATLASP[n]=new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{ const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight;
+      const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(img,0,0);
+      ATLAS[n]={d:x.getImageData(0,0,c.width,c.height).data,w:c.width}; res(); };
+    img.onerror=()=>rej(new Error('atlas '+n));
+    img.src='atlas_'+n+'.png'; });
+  return ATLASP[n];
+}
+function getTile(subj,fi){
+  const key=subj.a+':'+(subj.k0+fi);
+  if(tileCache.has(key)) return tileCache.get(key);
+  const A=ATLAS[subj.a], k=subj.k0+fi, out=new Uint8Array(T*T);
+  const r0=Math.floor(k/COLS)*T, c0=(k%COLS)*T;
+  for(let y=0;y<T;y++){ const off=((r0+y)*A.w+c0)*4;
+    for(let x=0;x<T;x++) out[y*T+x]=A.d[off+x*4]; }
+  tileCache.set(key,out); return out;
+}
+/* ================= rendering ================= */
+const off61=document.createElement('canvas'); off61.width=T; off61.height=T;
+const off61x=off61.getContext('2d');
+function stretchVals(vals,qf,qc,a){
+  const inva=1/Math.asinh(1/a), out=new Uint8Array(T*T);
+  for(let i=0;i<T*T;i++){ let n=(vals[i]-qf)/(qc-qf); n=n<0?0:(n>1?1:n);
+    out[i]=(Math.asinh(n/a)*inva*255)|0; }
+  return out;
+}
+function visFrameIndex(subj){ for(let i=0;i<subj.fr.length;i++) if(subj.fr[i].lb==='VIS') return i; return -1; }
+function renderFrame(ctx,subj,fi,params,marks,selIdx){
+  const fr=subj.fr[fi], vals=getTile(subj,fi);
+  const isEL=fr.t==='el';
+  const p=params[isEL?'el':'bb'];
+  const qf=isEL?p.floor*fr.sq:p.floor*(fr.sq||8);
+  const qc=Math.max(qf+2,fr.d98*p.ceil/100);
+  const st=stretchVals(vals,qf,qc,p.soft/100);
+  let visSt=null,b=0;
+  if(isEL&&params.blend>0){ const vi=visFrameIndex(subj);
+    if(vi>=0){ const vfr=subj.fr[vi];
+      visSt=stretchVals(getTile(subj,vi),0,vfr.d98,0.05); b=params.blend/100; } }
+  const im=off61x.createImageData(T,T), d=im.data;
+  for(let i=0;i<T*T;i++){
+    const j=st[i], o=i*4;
+    if(isEL){ const v=j*3;
+      let r=VIRIDIS[v], g=VIRIDIS[v+1], bl=VIRIDIS[v+2];
+      if(visSt){ const w=visSt[i]; r=(1-b)*r+b*w; g=(1-b)*g+b*w; bl=(1-b)*bl+b*w; }
+      d[o]=r; d[o+1]=g; d[o+2]=bl; }
+    else { d[o]=j; d[o+1]=j; d[o+2]=j; }
+    d[o+3]=255;
+  }
+  off61x.putImageData(im,0,0);
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  ctx.clearRect(0,0,VW,VW);
+  ctx.drawImage(off61,0,0,VW,VW);
+  if(marks){ marks.forEach((m,i)=>{ if(m.f!==fi) return;
+    ctx.beginPath(); ctx.arc(m.x*SCALE,m.y*SCALE,m.r*SCALE,0,6.2832);
+    ctx.strokeStyle=m.col||'#FF5252'; ctx.lineWidth=i===selIdx?3.5:2.2; ctx.stroke();
+    if(i===selIdx){ ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]);} });
+  }
+}
+function drawStrip(el,subj,cur,onpick){
+  el.innerHTML='';
+  subj.fr.forEach((fr,fi)=>{
+    const c=document.createElement('canvas'); c.width=T; c.height=T; c.title=fr.lb;
+    c.className=fi===cur?'on':'';
+    const x=c.getContext('2d'); const vals=getTile(subj,fi);
+    const im=x.createImageData(T,T);
+    const qf=fr.sq*1.0, qc=fr.d98, a=fr.t==='el'?0.3:0.05, inva=1/Math.asinh(1/a);
+    for(let i=0;i<T*T;i++){ let n=(vals[i]-qf)/(qc-qf); n=n<0?0:(n>1?1:n);
+      const y=Math.asinh(n/a)*inva, j=(y*255)|0, o=i*4;
+      if(fr.t==='el'){const v=j*3; im.data[o]=VIRIDIS[v]; im.data[o+1]=VIRIDIS[v+1]; im.data[o+2]=VIRIDIS[v+2];}
+      else{im.data[o]=j;im.data[o+1]=j;im.data[o+2]=j;}
+      im.data[o+3]=255; }
+    x.putImageData(im,0,0);
+    c.onclick=()=>onpick(fi);
+    el.appendChild(c);
+  });
+}
+/* ================= classify ================= */
+const $=id=>document.getElementById(id);
+const vctx=$('view').getContext('2d');
+let cur=null, curIdx=null, curFi=0, marks=[], selMark=-1;
+const params={ el:{floor:10,ceil:100,soft:30}, bb:{floor:0,ceil:100,soft:5}, blend:0 };
+const DEF=JSON.parse(JSON.stringify(params));
+function nOf(s){ const r=SUMMARY.get(s); return r?+r.n:0; }
+function pickSubject(skipIdx){
+  let best=null,bestC=1e9;
+  for(let i=0;i<SUBJ.length;i++){
+    if(i===skipIdx||MYDONE.has(i)) continue;
+    const n=nOf(i); if(n>=RETIRE) continue;
+    if(n<bestC){bestC=n;best=i; if(n===0&&Math.random()<0.02) break;}
+  }
+  return best;
+}
+function setFrame(fi){ curFi=fi; const fr=cur.fr[fi];
+  $('frname').textContent=fr.lb;
+  $('frmeta').textContent=fr.t==='el'?(fr.obs?`obs ${fr.obs} Å`:''):'broadband';
+  $('frcount').textContent=`frame ${fi+1}/${cur.fr.length} · ${cur.sid}`;
+  [...$('strip').children].forEach((c,i)=>c.className=i===fi?'on':'');
+  syncCtl(); paint();
+}
+function paint(){ if(cur) renderFrame(vctx,cur,curFi,params,marks,selMark); }
+function buildLineGrid(subj){
+  const box=$('linegrid'); box.innerHTML='';
+  if(!subj) return;
+  const seen=new Set();
+  subj.fr.forEach((fr,fi)=>{ if(fi===0||fr.t!=='el'||seen.has(fr.lb)) return;
+    seen.add(fr.lb);
+    const l=document.createElement('label');
+    l.innerHTML=`<input type="checkbox" value="${fr.lb}">${fr.lb}`;
+    box.appendChild(l); });
+  const l=document.createElement('label'); l.className='none';
+  l.innerHTML=`<input type="checkbox" id="noneopt" value="${NONE_OPT}">${NONE_OPT}`;
+  box.appendChild(l);
+}
+async function loadSubject(idx){
+  cur=idx==null?null:SUBJ[idx]; curIdx=idx; marks=[]; selMark=-1;
+  document.querySelectorAll('#qopts input').forEach(i=>i.checked=false);
+  buildLineGrid(cur);
+  $('notes').value='';
+  renderMarklist();
+  if(!cur){ $('frname').textContent='Every galaxy is fully classified — thank you! 🎉'; $('frmeta').textContent=''; $('frcount').textContent='';
+    vctx.clearRect(0,0,VW,VW); $('strip').innerHTML=''; $('submit').disabled=true; return; }
+  $('submit').disabled=false;
+  $('loadveil').style.display='flex';
+  try{ await ensureAtlas(cur.a); }
+  catch(e){ flashBanner('Could not load image data — check your connection and reload.'); return; }
+  finally{ $('loadveil').style.display='none'; }
+  drawStrip($('strip'),cur,0,setFrame);
+  setFrame(0);
+  updateProgress();
+}
+function updateProgress(){
+  const total=SUBJ.length*RETIRE;
+  let done=0; SUMMARY.forEach(r=>{ done+=Math.min(+r.n,RETIRE); });
+  const pct=total?100*done/total:0;
+  $('progress').textContent=`project progress ${done} / ${total} classifications (${pct.toFixed(1)}%) · you: ${MYDONE.size}`;
+  $('pfill').style.width=pct+'%';
+}
+function renderMarklist(){
+  const box=$('marklist'); box.innerHTML='';
+  if(!marks.length){ box.innerHTML='<span style="color:var(--faint);font-size:13px">No circles yet. If you see no clumps, that\'s a valid answer.</span>'; return; }
+  marks.forEach((m,i)=>{
+    const div=document.createElement('div'); div.className='mk'+(i===selMark?' on':'');
+    const fr=cur.fr[m.f];
+    div.innerHTML=`<span class="dot"></span><span style="font-family:var(--mono);font-size:12px">${fr.lb} · r ${(m.r*0.1).toFixed(2)}″</span>`;
+    const del=document.createElement('button'); del.textContent='×'; del.title='delete';
+    del.onclick=e=>{e.stopPropagation(); marks.splice(i,1); selMark=-1; renderMarklist(); paint();};
+    div.appendChild(del);
+    div.onclick=()=>{ selMark=i; setFrame(m.f); renderMarklist(); };
+    box.appendChild(div);
+  });
+}
+let drag=null;
+function evPos(e){ const r=$('view').getBoundingClientRect();
+  return {x:(e.clientX-r.left)*VW/r.width/SCALE, y:(e.clientY-r.top)*VW/r.height/SCALE}; }
+$('view').addEventListener('pointerdown',e=>{
+  if(!cur) return; $('view').setPointerCapture(e.pointerId);
+  const p=evPos(e);
+  for(let i=marks.length-1;i>=0;i--){ const m=marks[i]; if(m.f!==curFi) continue;
+    const d=Math.hypot(p.x-m.x,p.y-m.y);
+    if(Math.abs(d-m.r)<0.9){ drag={mode:'resize',i}; selMark=i; renderMarklist(); return; }
+    if(d<m.r){ drag={mode:'move',i,dx:p.x-m.x,dy:p.y-m.y}; selMark=i; renderMarklist(); return; }
+  }
+  const m={f:curFi,x:p.x,y:p.y,r:0.6}; marks.push(m); selMark=marks.length-1;
+  drag={mode:'resize',i:selMark,fresh:true}; renderMarklist();
+});
+$('view').addEventListener('pointermove',e=>{
+  if(!drag) return; const p=evPos(e), m=marks[drag.i];
+  if(drag.mode==='move'){ m.x=Math.min(T,Math.max(0,p.x-drag.dx)); m.y=Math.min(T,Math.max(0,p.y-drag.dy)); }
+  else m.r=Math.max(0.6,Math.hypot(p.x-m.x,p.y-m.y));
+  paint();
+});
+window.addEventListener('pointerup',()=>{
+  if(!drag) return;
+  const m=marks[drag.i];
+  if(drag.fresh&&m.r<1.1){ marks.splice(drag.i,1); selMark=-1; }
+  drag=null; renderMarklist(); paint();
+});
+function syncCtl(){ const p=params[cur&&cur.fr[curFi].t==='bb'?'bb':'el'];
+  $('c-floor').value=p.floor; $('c-ceil').value=p.ceil; $('c-soft').value=p.soft;
+  $('c-blend').value=params.blend;
+  $('v-floor').textContent=(p.floor/10).toFixed(1)+'σ'; $('v-ceil').textContent=(p.ceil)+'%'; $('v-soft').textContent=(p.soft/100).toFixed(2);
+  $('v-blend').textContent=params.blend+'%';
+}
+['c-floor','c-ceil','c-soft','c-blend'].forEach(id=>$(id).addEventListener('input',()=>{
+  const t=cur&&cur.fr[curFi].t==='bb'?'bb':'el';
+  params[t].floor=+$('c-floor').value; params[t].ceil=+$('c-ceil').value; params[t].soft=+$('c-soft').value;
+  params.blend=+$('c-blend').value;
+  syncCtl(); paint();
+}));
+$('c-reset').onclick=()=>{ Object.assign(params.el,DEF.el); Object.assign(params.bb,DEF.bb); params.blend=0; syncCtl(); paint(); };
+$('prevf').onclick=()=>{ if(cur){ setFrame((curFi+cur.fr.length-1)%cur.fr.length); } };
+$('nextf').onclick=()=>{ if(cur){ setFrame((curFi+1)%cur.fr.length); } };
+$('qopts').innerHTML='';
+QUALITIES.forEach((q,i)=>{ const l=document.createElement('label'); l.className='qopt';
+  l.innerHTML=`<input type="radio" name="q" value="${i}">${q}`; $('qopts').appendChild(l); });
+$('linegrid').addEventListener('change',e=>{
+  const none=$('noneopt');
+  if(!none) return;
+  if(e.target===none&&none.checked) document.querySelectorAll('#linegrid input:not(#noneopt)').forEach(i=>i.checked=false);
+  else if(e.target.checked) none.checked=false;
+});
+$('skip').onclick=()=>{ if(curIdx!=null) loadSubject(pickSubject(curIdx)); };
+$('submit').onclick=submit;
+function bumpSummary(s,rec){
+  const r=SUMMARY.get(s);
+  if(!r) SUMMARY.set(s,{s, n:1, mm:rec.m.length, q_mode:rec.q, n_q:1, sd:0, n_marks:rec.m.length, lines:[rec.l]});
+  else { r.n=+r.n+1; r.n_marks=+r.n_marks+rec.m.length; (r.lines=r.lines||[]).push(rec.l); }
+}
+function submit(){
+  if(!cur) return;
+  if(!user){ $('uname').focus(); flashBanner('Enter your name (top right) before classifying.'); return; }
+  const q=document.querySelector('#qopts input:checked');
+  if(!q){ flashBanner('Pick a map quality (question 2) before submitting.'); return; }
+  const lines=[...document.querySelectorAll('#linegrid input:checked')].map(i=>i.value);
+  const rec={u:user, s:curIdx, sid:cur.sid, q:+q.value, l:lines,
+    m:marks.map(m=>[m.f,+m.x.toFixed(2),+m.y.toFixed(2),+m.r.toFixed(2)]),
+    n:$('notes').value.trim().slice(0,300), t:Date.now()};
+  MYDONE.add(curIdx); try{ localStorage.setItem('cs_mine',JSON.stringify([...MYDONE])); }catch(e){}
+  bumpSummary(curIdx,rec); updateProgress();
+  queuePush(rec);
+  loadSubject(pickSubject());
+  drainQueue().then(left=>{ if(left) flashBanner('Database unreachable — your classification is queued in this browser and will retry.'); });
+}
+/* ================= results ================= */
+function fmtQ(i){ return ['Clean','Noisy','Artifact','Unusable'][i]||'—'; }
+function disOf(r){
+  if(+r.n<2) return 0;
+  return +(Math.min(1,(+r.sd||0)/3)*0.6 + ((+r.n_q||1)-1)/3*0.4).toFixed(2);
+}
+function topLines(r){
+  const c={}; (r.lines||[]).forEach(arr=>(arr||[]).forEach(l=>{ if(l!==NONE_OPT) c[l]=(c[l]||0)+1; }));
+  return Object.keys(c).sort((a,b)=>c[b]-c[a]).slice(0,3).join(', ')||'—';
+}
+function renderResults(){
+  if(TOTALS){
+    $('r-cls').textContent=TOTALS.cls||0;
+    $('r-subj').textContent=TOTALS.started||0;
+    $('r-done').textContent=TOTALS.retired||0;
+    $('r-marks').textContent=TOTALS.marks||0;
+    $('r-users').textContent=TOTALS.users||0;
+  }
+  const tb=$('rtable'); tb.innerHTML='';
+  let keys=[...SUMMARY.keys()];
+  if($('sortdis').checked) keys.sort((a,b)=>disOf(SUMMARY.get(b))-disOf(SUMMARY.get(a)));
+  else keys.sort((a,b)=>a-b);
+  keys.forEach(s=>{
+    const r=SUMMARY.get(s), subj=SUBJ[s]; if(!subj) return;
+    const dis=disOf(r), qmode=+r.q_mode;
+    const tr=document.createElement('tr');
+    const pill=qmode===0?'g':(qmode===3?'b':'w');
+    const dpill=dis>=0.5?'b':(dis>=0.25?'w':'g');
+    tr.innerHTML=`<td style="font-family:var(--mono);font-size:12px">${subj.sid}</td><td>${subj.z}</td>
+      <td>${subj.ha?'✓':'—'}</td><td>${r.n}</td><td>${(+r.mm).toFixed(0)}</td>
+      <td><span class="pill ${pill}">${fmtQ(qmode)}</span></td>
+      <td><span class="pill ${dpill}">${+r.n<2?'—':dis.toFixed(2)}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${topLines(r)}</td>`;
+    tr.onclick=()=>inspect(s);
+    tb.appendChild(tr);
+  });
+}
+document.addEventListener('change',e=>{ if(e.target&&e.target.id==='sortdis') renderResults(); });
+const USERCOLS=['#FF5252','#4FC3F7','#FFD54F','#81C784','#CE93D8','#FF8A65','#90CAF9','#A5D6A7'];
+let iSubj=null,iFi=0,iMarks=[];
+const ictx=$('iview').getContext('2d');
+async function inspect(s){
+  iSubj=s; iFi=0; $('inspect').style.display='grid';
+  const subj=SUBJ[s];
+  $('i-title').textContent=`Galaxy ${subj.sid}`;
+  $('i-detail').innerHTML='<span style="color:var(--faint)">loading…</span>';
+  try{ await ensureAtlas(subj.a); }catch(e){ return; }
+  drawStrip($('i-strip'),subj,0,fi=>{iFi=fi; ipaint();});
+  let rows=[];
+  try{ rows=await rpc('public_marks',{subject:s}); }catch(e){}
+  iMarks=[]; const det=[`<div>z = ${subj.z} · RA ${subj.ra} · Dec ${subj.dec} · ${subj.ha?'has Hα':'no Hα frame'}</div>`];
+  rows.forEach(r=>{ const col=USERCOLS[(+r.ui-1)%USERCOLS.length];
+    (r.m||[]).forEach(m=>iMarks.push({f:m[0],x:m[1],y:m[2],r:m[3],col}));
+    const ls=(r.l||[]).map(l=>l===NONE_OPT?'none':l).join(', ');
+    det.push(`<div><span style="color:${col}">●</span> <b>Classifier ${r.ui}</b> — ${fmtQ(+r.q)}, ${(r.m||[]).length} circle${(r.m||[]).length!==1?'s':''}${ls?', lines: '+ls:''}</div>`);
+  });
+  $('i-detail').innerHTML=det.join('');
+  ipaint();
+  $('inspect').scrollIntoView({behavior:'smooth'});
+}
+function ipaint(){
+  if(iSubj==null) return;
+  const subj=SUBJ[iSubj];
+  renderFrame(ictx,subj,iFi,params,iMarks,-1);
+  const fr=subj.fr[iFi];
+  $('i-frname').textContent=fr.lb; $('i-frmeta').textContent=fr.t==='el'?(fr.obs?`obs ${fr.obs} Å`:''):'broadband';
+  $('frcount2').textContent=`frame ${iFi+1}/${subj.fr.length}`;
+  [...$('i-strip').children].forEach((c,i)=>c.className=i===iFi?'on':'');
+}
+$('i-prevf').onclick=()=>{ if(iSubj!=null){ iFi=(iFi+SUBJ[iSubj].fr.length-1)%SUBJ[iSubj].fr.length; ipaint(); } };
+$('i-nextf').onclick=()=>{ if(iSubj!=null){ iFi=(iFi+1)%SUBJ[iSubj].fr.length; ipaint(); } };
+/* ================= exports (research team only) ================= */
+function csvEsc(v){ v=String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function classCSV(rows){
+  const head='user,source_id,z,quality,lines,n_marks,notes,timestamp_iso';
+  const out=rows.map(r=>{const s=SUBJ[r.s]; return [r.u,r.sid,s?s.z:'',fmtQ(r.q),
+    (r.l||[]).map(l=>l===NONE_OPT?'none':l).join('; '),(r.m||[]).length,r.n||'',new Date(+r.t).toISOString()].map(csvEsc).join(',');});
+  return head+'\n'+out.join('\n')+'\n';
+}
+function marksCSV(rows){
+  const head='user,source_id,frame_index,frame_label,x_col_101px,y_row_101px,r_px,r_arcsec,timestamp_iso';
+  const out=[];
+  rows.forEach(r=>{ const s=SUBJ[r.s]; if(!s) return;
+    (r.m||[]).forEach(m=>{ const fr=s.fr[m[0]];
+      out.push([r.u,r.sid,m[0],fr?fr.lb:'',(m[1]+20).toFixed(2),(61-m[2]+20).toFixed(2),
+        (+m[3]).toFixed(2),(m[3]*0.1).toFixed(3),new Date(+r.t).toISOString()].map(csvEsc).join(','));});});
+  return head+'\n'+out.join('\n')+'\n';
+}
+function consensusClumps(rows){
+  const by={}; rows.forEach(r=>{ (by[r.s]=by[r.s]||[]).push(r); });
+  const out=[];
+  Object.keys(by).forEach(sk=>{
+    const s=+sk, rs=by[s], subj=SUBJ[s]; if(!subj) return;
+    const nUsers=new Set(rs.map(r=>r.u)).size;
+    const pts=[]; rs.forEach(r=>(r.m||[]).forEach(m=>pts.push({u:r.u,f:m[0],x:m[1],y:m[2],r:m[3]})));
+    const used=new Array(pts.length).fill(false);
+    for(let i=0;i<pts.length;i++){
+      if(used[i]) continue;
+      const cl=[i]; used[i]=true;
+      for(let j=0;j<cl.length;j++){ const a=pts[cl[j]];
+        for(let k=0;k<pts.length;k++){ if(used[k]) continue; const b2=pts[k];
+          if(a.f!==b2.f) continue;
+          const lim=Math.max(3,Math.min(a.r,b2.r));
+          if(Math.hypot(a.x-b2.x,a.y-b2.y)<lim){ cl.push(k); used[k]=true; } } }
+      const ms=cl.map(ix=>pts[ix]);
+      const users=new Set(ms.map(m=>m.u));
+      const need=nUsers>=2?2:1;
+      if(users.size<need) continue;
+      const cx=ms.reduce((a,m)=>a+m.x,0)/ms.length, cy=ms.reduce((a,m)=>a+m.y,0)/ms.length,
+            cr=ms.reduce((a,m)=>a+m.r,0)/ms.length, f=ms[0].f;
+      out.push({sid:subj.sid, z:subj.z, f, lb:subj.fr[f]?subj.fr[f].lb:'', cx, cy, cr,
+                nu:users.size, nc:nUsers, nm:ms.length});
+    }
+  });
+  return out;
+}
+function consensusCSV(rows){
+  const head='source_id,z,frame_index,frame_label,x_col_101px,y_row_101px,r_px,r_arcsec,n_users_agreeing,n_classifiers,n_marks_in_cluster';
+  const out=consensusClumps(rows).map(c=>[c.sid,c.z,c.f,c.lb,(c.cx+20).toFixed(2),(61-c.cy+20).toFixed(2),
+    c.cr.toFixed(2),(c.cr*0.1).toFixed(3),c.nu,c.nc,c.nm].map(csvEsc).join(','));
+  return head+'\n'+out.join('\n')+'\n';
+}
+function mlCSV(rows){
+  const head='source_id,frame_index,frame_label,class,x_center_norm,y_center_norm,width_norm,height_norm,x_col_101px,y_row_101px,r_px,n_users_agreeing';
+  const out=consensusClumps(rows).map(c=>[c.sid,c.f,c.lb,0,(c.cx/61).toFixed(4),(c.cy/61).toFixed(4),
+    (2*c.cr/61).toFixed(4),(2*c.cr/61).toFixed(4),(c.cx+20).toFixed(2),(61-c.cy+20).toFixed(2),c.cr.toFixed(2),c.nu].map(csvEsc).join(','));
+  return head+'\n'+out.join('\n')+'\n';
+}
+function giveCSV(name,text){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+let pendingDl=null;
+async function tryLogin(){
+  $('loginbtn').disabled=true;
+  try{
+    const r=await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`,{method:'POST',
+      headers:{apikey:SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email:$('lemail').value.trim(),password:$('lpass').value})});
+    if(!r.ok) throw 0;
+    const j=await r.json(); TOKEN=j.access_token;
+    $('logindlg').close(); $('whoami').textContent='Signed in as '+($('lemail').value.trim());
+    $('logout').style.display='';
+    const k=pendingDl; pendingDl=null; if(k) doDownload(k);
+  }catch(e){ $('lerr').style.display='block'; }
+  $('loginbtn').disabled=false;
+}
+$('logout').onclick=()=>{ TOKEN=null; FULL=null; $('logout').style.display='none';
+  $('whoami').textContent='Research-team sign-in required for exports.'; };
+async function fetchFull(){
+  const r=await fetch(`${SUPA_URL}/rest/v1/clumpscope?select=u,s,sid,q,l,m,n,t&limit=200000`,
+    {headers:supaHeaders(false,TOKEN)});
+  if(!r.ok) throw new Error('full '+r.status);
+  return r.json();
+}
+async function doDownload(kind){
+  try{ FULL=await fetchFull(); }
+  catch(e){ TOKEN=null; $('logout').style.display='none';
+    $('whoami').textContent='Research-team sign-in required for exports.';
+    flashBanner('Session expired or access denied — sign in again.'); return; }
+  if(kind==='class') giveCSV('clumpscope_classifications.csv',classCSV(FULL));
+  else if(kind==='marks') giveCSV('clumpscope_marks.csv',marksCSV(FULL));
+  else if(kind==='consensus') giveCSV('clumpscope_consensus_catalogue.csv',consensusCSV(FULL));
+  else if(kind==='ml') giveCSV('clumpscope_ml_labels.csv',mlCSV(FULL));
+}
+document.querySelectorAll('.dlbtn').forEach(b=>b.onclick=()=>{
+  if(TOKEN) doDownload(b.dataset.kind);
+  else { pendingDl=b.dataset.kind; $('lerr').style.display='none'; $('logindlg').showModal(); $('lemail').focus(); }
+});
+/* ================= tabs / misc ================= */
+function showTab(t){ ['about','classify','results'].forEach(k=>{
+  $(k).style.display = k===t ? (k==='classify'?'grid':'block') : 'none';
+  $('tb-'+k).className = k===t?'on':''; });
+  if(t==='results'){ refreshSummary().then(renderResults).catch(()=>{}); renderResults(); }
+}
+function flashBanner(msg){ const b=$('banner'); b.textContent=msg; b.style.display='block';
+  clearTimeout(b._t); b._t=setTimeout(()=>b.style.display='none',6000); }
+$('uname').value=user;
+$('uname').addEventListener('change',()=>{ user=$('uname').value.trim(); try{localStorage.setItem('cs_user',user);}catch(e){} updateProgress(); });
+window.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  if($('classify').style.display==='none') return;
+  if(e.key==='ArrowLeft'){$('prevf').click();e.preventDefault();}
+  else if(e.key==='ArrowRight'){$('nextf').click();e.preventDefault();}
+  else if(e.key>='1'&&e.key<='4'){ const r=document.querySelectorAll('#qopts input')[+e.key-1]; if(r) r.checked=true; }
+  else if(e.key==='Backspace'||e.key==='Delete'){ if(selMark>=0){marks.splice(selMark,1);selMark=-1;renderMarklist();paint();e.preventDefault();} }
+  else if(e.key==='Enter'){ submit(); }
+});
+/* ================= boot ================= */
+
+async function boot(){
+  try{
+    const man=await (await fetch('manifest.json')).json();
+    T=man.tile; COLS=man.cols; VW=T*SCALE; SUBJ=man.subjects;
+  }catch(e){ $('frname').textContent='Could not load the galaxy sample — reload the page.'; return; }
+  try{ await refreshSummary(); }catch(e){ flashBanner('Results database unreachable — classifying still works; saves will retry.'); }
+  drainQueue();
+  showTab('classify');
+  loadSubject(pickSubject());
+  renderResults();
+  setInterval(()=>{ refreshSummary().then(()=>{ updateProgress(); if($('results').style.display!=='none') renderResults(); }).catch(()=>{}); }, 90000);
+}
+boot();
+</script>
+</body>
+</html>

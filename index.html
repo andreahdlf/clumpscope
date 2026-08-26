@@ -242,6 +242,25 @@ footer{max-width:1180px;margin:30px auto 0;padding:14px 22px;border-top:1px soli
       <span id="whoami" style="font-size:12.5px;color:var(--faint)">Research-team sign-in required for exports.</span>
       <button id="logout" style="display:none;padding:4px 12px;font-size:12.5px">Sign out</button>
     </div>
+    <details style="margin:2px 0 14px;font-size:13px;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:10px 14px">
+      <summary style="cursor:pointer;color:var(--text);font-weight:600">What do the columns and downloads mean?</summary>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px;line-height:1.5">
+        <div><b style="color:var(--text)">The tiles.</b> <i>Classifications</i> is the total number of submissions; <i>galaxies started</i> is how many different galaxies have at least one; <i>retired</i> counts galaxies that have reached 5 classifications and are no longer shown to new visitors; <i>circles drawn</i> is the total number of clump circles; <i>classifiers</i> is the number of distinct classifier names.</div>
+        <div><b style="color:var(--text)">Galaxy</b> — the Euclid source ID. Click any row to open that galaxy below the table and see everyone's circles overlaid (classifiers shown anonymously).</div>
+        <div><b style="color:var(--text)">z</b> — the galaxy's redshift, from the Khostovan catalogue.</div>
+        <div><b style="color:var(--text)">Hα</b> — ✓ if this galaxy has an Hα map; — means Hα falls outside Euclid's wavelength range for its redshift, so the first frame is another line.</div>
+        <div><b style="color:var(--text)">Class.</b> — how many people have classified this galaxy so far (it retires at 5).</div>
+        <div><b style="color:var(--text)">Circles (med)</b> — the median number of circles drawn per classification: a robust estimate of how many clumps people see.</div>
+        <div><b style="color:var(--text)">Quality consensus</b> — the most common answer to "How is the Hα map?" (Clean / Noisy / Artifact / Unusable).</div>
+        <div><b style="color:var(--text)">Disagreement</b> — 0 to 1: how much classifiers differ on this galaxy, combining the spread in their circle counts with how split the quality votes are. Shown once a galaxy has 2+ classifications; high values (red) mark galaxies worth a second look — tick "Sort by disagreement" to review those first.</div>
+        <div><b style="color:var(--text)">Lines ticked</b> — the other emission lines people have reported seeing (up to the three most-ticked).</div>
+        <div style="margin-top:4px"><b style="color:var(--text)">The downloads</b> (research team only, after sign-in):</div>
+        <div><b style="color:var(--text)">Classifications CSV</b> — one row per submitted classification: classifier name, quality answer, lines ticked, number of circles, notes, timestamp.</div>
+        <div><b style="color:var(--text)">Marks CSV</b> — one row per individual circle: which frame it was drawn on, the centre in 101-px stamp coordinates (col = x+20, row = 61−y+20, origin bottom-left), and the radius in pixels and arcsec.</div>
+        <div><b style="color:var(--text)">Consensus catalogue CSV</b> — circles from different people are clustered, and clusters marked by at least two distinct classifiers are kept: one row per agreed clump with the mean centre and radius plus agreement counts, ready to compare against the automated catalogue.</div>
+        <div><b style="color:var(--text)">ML labels CSV</b> — the same consensus clumps written as YOLO-style normalised bounding boxes, ready to train a machine-learning clump finder.</div>
+      </div>
+    </details>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
       <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="sortdis" style="accent-color:var(--accent);margin-right:6px">Sort by disagreement (review contentious galaxies first)</label>
     </div>

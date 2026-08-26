@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ClumpScope</title>
 <meta name="description" content="Help astronomers find star-forming clumps in Euclid Hα emission-line maps.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
@@ -105,6 +105,13 @@ tbody tr:hover{background:var(--panel2)}
 dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;max-width:680px;width:92%;padding:18px}
 dialog::backdrop{background:rgba(4,8,18,.7)}
 footer{max-width:1180px;margin:30px auto 0;padding:14px 22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--faint)}
+#delmark{position:absolute;right:10px;bottom:10px;display:none;background:rgba(226,109,109,.92);border:none;color:#fff;font-weight:600;font-size:13.5px;padding:9px 14px;border-radius:8px;z-index:5;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:30px;background:transparent;padding:0;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--inset);border:1px solid var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);border:none;margin-top:-9px;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--inset);border:1px solid var(--line)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--accent);border:none}
+body{overflow-x:clip}
 @media(max-width:960px){#classify,#inspect{grid-template-columns:1fr}}
 @media(max-width:640px){
   header{padding:8px 10px;gap:6px 10px}
@@ -122,6 +129,12 @@ footer{max-width:1180px;margin:30px auto 0;padding:14px 22px;border-top:1px soli
   .tile b{font-size:22px}
   th,td{padding:6px 7px;font-size:12px}
   .controls{font-size:12.5px}
+  input,textarea,select{font-size:16px} /* stops iOS zooming the page when a field is tapped */
+  #notes{font-size:16px}
+  input[type=range]{height:34px}
+  input[type=range]::-webkit-slider-thumb{width:26px;height:26px;margin-top:-11px}
+  input[type=range]::-moz-range-thumb{width:26px;height:26px}
+  .controls .val{min-width:40px}
   .submitrow .primary{padding:13px}
   footer{padding:12px}
   dialog{width:94%;padding:14px}
@@ -201,7 +214,7 @@ footer{max-width:1180px;margin:30px auto 0;padding:14px 22px;border-top:1px soli
   <section id="classify">
     <div class="viewwrap">
       <div class="framehead"><span id="frname">Loading the sample…</span><span id="frmeta"></span><span id="frcount"></span></div>
-      <div class="canvasbox"><canvas id="view" width="549" height="549"></canvas><div id="loadveil">loading galaxy…</div></div>
+      <div class="canvasbox"><canvas id="view" width="549" height="549"></canvas><div id="loadveil">loading galaxy…</div><button id="delmark" title="Delete the selected circle">✕ Delete circle</button></div>
       <div class="stripwrap">
         <button class="navb" id="prevf" title="previous frame">‹</button>
         <div id="strip"></div>
@@ -461,7 +474,7 @@ function pickSubject(skipIdx){
   }
   return best;
 }
-function setFrame(fi){ curFi=fi; const fr=cur.fr[fi];
+function setFrame(fi){ curFi=fi; const fr=cur.fr[fi]; if(document.getElementById('delmark')) updateDelBtn();
   $('frname').textContent=fr.lb;
   $('frmeta').textContent=fr.t==='el'?(fr.obs?`obs ${fr.obs} Å`:''):'broadband';
   $('frcount').textContent=`frame ${fi+1}/${cur.fr.length} · ${cur.sid}`;
@@ -506,6 +519,8 @@ function updateProgress(){
   $('progress').textContent=`project progress ${done} / ${total} classifications (${pct.toFixed(1)}%) · you: ${MYDONE.size}`;
   $('pfill').style.width=pct+'%';
 }
+function updateDelBtn(){ const b=document.getElementById('delmark');
+  b.style.display=(selMark>=0&&marks[selMark]&&marks[selMark].f===curFi)?'block':'none'; }
 function renderMarklist(){
   const box=$('marklist'); box.innerHTML='';
   if(!marks.length){ box.innerHTML='<span style="color:var(--faint);font-size:13px">No circles yet. If you see no clumps, that\'s a valid answer.</span>'; return; }
@@ -519,7 +534,10 @@ function renderMarklist(){
     div.onclick=()=>{ selMark=i; setFrame(m.f); renderMarklist(); };
     box.appendChild(div);
   });
+  updateDelBtn();
 }
+document.getElementById('delmark').addEventListener('click',e=>{ e.stopPropagation();
+  if(selMark>=0){ marks.splice(selMark,1); selMark=-1; renderMarklist(); paint(); } });
 let drag=null;
 function evPos(e){ const r=$('view').getBoundingClientRect();
   return {x:(e.clientX-r.left)*VW/r.width/SCALE, y:(e.clientY-r.top)*VW/r.height/SCALE}; }

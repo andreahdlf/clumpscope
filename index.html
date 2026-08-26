@@ -106,6 +106,26 @@ dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);bo
 dialog::backdrop{background:rgba(4,8,18,.7)}
 footer{max-width:1180px;margin:30px auto 0;padding:14px 22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--faint)}
 @media(max-width:960px){#classify,#inspect{grid-template-columns:1fr}}
+@media(max-width:640px){
+  header{padding:8px 10px;gap:6px 10px}
+  .chip{display:none}
+  nav{margin-left:0;gap:2px}
+  nav button{padding:7px 10px}
+  #userbox{margin-left:auto}
+  #userbox input{width:104px}
+  main{padding:12px}
+  #classify,#inspect{gap:14px}
+  .viewwrap{padding:8px}
+  .task{padding:12px;gap:13px}
+  h2{font-size:18px}
+  .tile{padding:10px 12px}
+  .tile b{font-size:22px}
+  th,td{padding:6px 7px;font-size:12px}
+  .controls{font-size:12.5px}
+  .submitrow .primary{padding:13px}
+  footer{padding:12px}
+  dialog{width:94%;padding:14px}
+}
 @media(prefers-reduced-motion:no-preference){nav button,button.primary{transition:background .15s,color .15s,filter .15s}}
 </style>
 </head>
@@ -506,9 +526,10 @@ function evPos(e){ const r=$('view').getBoundingClientRect();
 $('view').addEventListener('pointerdown',e=>{
   if(!cur) return; $('view').setPointerCapture(e.pointerId);
   const p=evPos(e);
+  const tol=e.pointerType==='touch'?2.2:0.9; /* fatter rim grab for fingers */
   for(let i=marks.length-1;i>=0;i--){ const m=marks[i]; if(m.f!==curFi) continue;
     const d=Math.hypot(p.x-m.x,p.y-m.y);
-    if(Math.abs(d-m.r)<0.9){ drag={mode:'resize',i}; selMark=i; renderMarklist(); return; }
+    if(Math.abs(d-m.r)<tol){ drag={mode:'resize',i}; selMark=i; renderMarklist(); return; }
     if(d<m.r){ drag={mode:'move',i,dx:p.x-m.x,dy:p.y-m.y}; selMark=i; renderMarklist(); return; }
   }
   const m={f:curFi,x:p.x,y:p.y,r:0.6}; marks.push(m); selMark=marks.length-1;

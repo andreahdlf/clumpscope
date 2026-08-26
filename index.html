@@ -147,8 +147,8 @@ body{overflow-x:clip}
   <div class="brand">Clump<em>Scope</em></div>
   <span class="chip">1,292 galaxies · Euclid × COSMOS</span>
   <nav>
-    <button id="tb-about" onclick="showTab('about')">About</button>
-    <button id="tb-classify" class="on" onclick="showTab('classify')">Classify</button>
+    <button id="tb-about" class="on" onclick="showTab('about')">About</button>
+    <button id="tb-classify" onclick="showTab('classify')">Classify</button>
     <button id="tb-results" onclick="showTab('results')">Results</button>
   </nav>
   <div id="userbox">
@@ -160,7 +160,7 @@ body{overflow-x:clip}
 <main>
   <div class="banner" id="banner"></div>
 
-  <section id="about" class="prose" style="display:none">
+  <section id="about" class="prose">
     <h1 style="font-size:26px;margin-bottom:14px">Hunting star-forming clumps in Euclid Hα maps</h1>
     <p>Star-forming clumps are luminous, compact (kpc-scale) regions of intense star formation embedded within gas-rich disks at cosmic noon (z ≈ 1–2). These structures can contribute up to ~50% of a galaxy's total star formation rate and are thought to play an important role in bulge assembly and internal galaxy evolution.</p>
     <p>Using Hα emission-line maps rather than rest-frame UV images allows us to uncover clumps that would otherwise remain hidden, and to separate star-forming regions from contaminants such as AGN or mergers. Producing emission-line maps from Euclid NISP slitless spectroscopy effectively transforms a spectrometer into a photometer.</p>
@@ -208,6 +208,7 @@ body{overflow-x:clip}
     <p><strong>Why does the answer list include lines the galaxy doesn't have?</strong><br>Every galaxy gets the same fixed list, covering all the lines the survey can capture. Depending on a galaxy's redshift, only some of those lines land in Euclid's wavelength range, so most galaxies only have maps for a few. Leave the rest unticked.</p>
     <p><strong>How many people look at each galaxy?</strong><br>Five, for now. A galaxy is retired once it has been classified five times, and we compare all five answers when we build the final catalogue.</p>
     <p><strong>What happens with my classifications?</strong><br>They are used to verify an automatically produced clump catalogue and to train machine-learning models to find clumps in Hα maps. The results will feed into a scientific publication on star-forming clumps in Euclid galaxies; volunteers' contributions will be acknowledged.</p>
+    <p style="margin:22px 0 8px"><button class="primary" onclick="showTab('classify')" style="font-size:16px;padding:13px 34px">Classify now</button></p>
     <p style="color:var(--muted)">This project is run by Andrea Henderson de la Fuente (University of Oxford) with the Euclid Consortium.</p>
   </section>
 
@@ -785,6 +786,7 @@ document.querySelectorAll('.dlbtn').forEach(b=>b.onclick=()=>{
 function showTab(t){ ['about','classify','results'].forEach(k=>{
   $(k).style.display = k===t ? (k==='classify'?'grid':'block') : 'none';
   $('tb-'+k).className = k===t?'on':''; });
+  window.scrollTo(0,0);
   if(t==='results'){ refreshSummary().then(renderResults).catch(()=>{}); renderResults(); }
 }
 function flashBanner(msg){ const b=$('banner'); b.textContent=msg; b.style.display='block';
@@ -809,7 +811,7 @@ async function boot(){
   }catch(e){ $('frname').textContent='Could not load the galaxy sample — reload the page.'; return; }
   try{ await refreshSummary(); }catch(e){ flashBanner('Results database unreachable — classifying still works; saves will retry.'); }
   drainQueue();
-  showTab('classify');
+  showTab('about');
   loadSubject(pickSubject());
   renderResults();
   setInterval(()=>{ refreshSummary().then(()=>{ updateProgress(); if($('results').style.display!=='none') renderResults(); }).catch(()=>{}); }, 90000);

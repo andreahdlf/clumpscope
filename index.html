@@ -389,12 +389,17 @@ let cur=null, curIdx=null, curFi=0, marks=[], selMark=-1;
 const params={ el:{floor:10,ceil:100,soft:30}, bb:{floor:0,ceil:100,soft:5}, blend:0 };
 const DEF=JSON.parse(JSON.stringify(params));
 function nOf(s){ const r=SUMMARY.get(s); return r?+r.n:0; }
+let ORDER=null; /* random permutation, fresh every page load, so users don't all see the same galaxies in the same order */
 function pickSubject(skipIdx){
+  if(!ORDER||ORDER.length!==SUBJ.length){
+    ORDER=Array.from({length:SUBJ.length},(_,i)=>i);
+    for(let i=ORDER.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [ORDER[i],ORDER[j]]=[ORDER[j],ORDER[i]]; }
+  }
   let best=null,bestC=1e9;
-  for(let i=0;i<SUBJ.length;i++){
+  for(const i of ORDER){
     if(i===skipIdx||MYDONE.has(i)) continue;
     const n=nOf(i); if(n>=RETIRE) continue;
-    if(n<bestC){bestC=n;best=i; if(n===0&&Math.random()<0.02) break;}
+    if(n<bestC){bestC=n;best=i; if(n===0) break;}
   }
   return best;
 }

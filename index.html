@@ -195,15 +195,21 @@ body{overflow-x:clip}
     <h2>How to classify — a quick tutorial</h2>
     <p><strong>Step 1 — Find the galaxy.</strong> Flip to the last two greyscale frames (VIS and NISP-Y) to see where the galaxy sits, then come back to the Hα frame. Real clumps sit <em>on</em> the galaxy, so knowing where it is makes everything easier. The VIS blend slider fades the starlight image in underneath the Hα map if you want to see both at once.</p>
     <p><strong>Step 2 — Circle every clump.</strong> A clump is a compact bright knot that sits on the galaxy and stands out from its surroundings. Press on the centre of a knot and drag outward until the circle wraps around it. Drag a circle to move it, drag its rim to resize it, and tap it and press ✕ to delete it. You can draw circles on <em>any</em> emission-line frame, not only Hα — every circle records which map it was drawn on.</p>
-    <figure style="margin:6px 0 16px;max-width:305px">
-      <img src="tut_circles.png" alt="A clumpy galaxy in Hα with four bright knots, each marked with a red circle" style="width:100%;border-radius:8px;display:block">
-      <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px">A lumpy galaxy with its clumps circled — this is what a finished classification looks like. Each knot gets its own circle.</figcaption>
+    <figure style="margin:16px 0;max-width:305px">
+      <img src="tut_circles.png" alt="A galaxy in Hα with two bright knots, each marked with a red circle" style="width:100%;border-radius:8px;display:block">
+      <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Circle these.</strong> Two clumps, two circles — each bright knot gets its own. This is what a finished classification looks like.</figcaption>
     </figure>
     <p><strong>Step 3 — Know what <em>not</em> to circle.</strong> Isolated bright specks scattered far from the galaxy are noise. Long diagonal streaks are contamination from the spectra of other objects in the field — an instrumental artifact, not emission.</p>
-    <figure style="margin:6px 0 16px;max-width:640px">
-      <img src="tut_dontcircle.png" alt="Two maps: an isolated noise speck and a diagonal contamination streak, each marked with a dashed circle and a red cross" style="max-width:100%;border-radius:8px;display:block">
-      <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px">Leave these alone: specks that don't sit on the galaxy, and diagonal streaks. If a streak crosses the map, pick "Artifact present" in the quality question instead.</figcaption>
-    </figure>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin:16px 0">
+      <figure style="margin:0;flex:1 1 240px;max-width:305px">
+        <img src="tut_noise.png" alt="A map full of scattered specks, one isolated speck marked with a dashed circle and a red cross" style="width:100%;border-radius:8px;display:block">
+        <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Not this.</strong> An isolated speck away from the galaxy is noise — leave it alone.</figcaption>
+      </figure>
+      <figure style="margin:0;flex:1 1 240px;max-width:305px">
+        <img src="tut_streak.png" alt="A map with a bright diagonal streak, one segment marked with a dashed circle and a red cross" style="width:100%;border-radius:8px;display:block">
+        <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Not this either.</strong> A diagonal streak is contamination, not emission — pick "Artifact present" instead.</figcaption>
+      </figure>
+    </div>
     <p><strong>Step 4 — Answer the two questions.</strong> Rate the Hα map (clean, noisy-but-usable, artifact-contaminated, or unusable), and tick any other line where you see emission at the galaxy's position. Leaving boxes unticked is normal.</p>
     <p><strong>Step 5 — Submit.</strong> If you see no clumps, that is a perfectly good answer — press <em>Submit &amp; next</em> without drawing anything. If you are unsure, give it your best guess; several people see every image, so no single answer decides anything.</p>
     <p><strong>The contrast controls are yours.</strong> Faint clumps often appear when you lower the floor or raise the softness; hard stretches sharpen bright knots. The <strong>VIS blend</strong> slider fades the starlight image in under any emission-line frame, so you can check that a knot really sits on the galaxy. Adjusting these affects only your view, never the data.</p>

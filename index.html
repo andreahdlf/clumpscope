@@ -368,6 +368,17 @@ async function rpc(name,args){
   if(!r.ok) throw new Error(name+' '+r.status);
   return r.json();
 }
+let NTOK=''; try{ NTOK=localStorage.getItem('cs_tok')||''; }catch(e){}
+if(!NTOK){ NTOK=(crypto&&crypto.randomUUID)?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16);});
+  try{ localStorage.setItem('cs_tok',NTOK); }catch(e){} }
+let CLAIMED='';
+async function claimName(n){
+  try{
+    const ok=await rpc('claim_name',{p_name:n,p_token:NTOK});
+    if(ok===true){ CLAIMED=n; return true; }
+    return false;
+  }catch(e){ CLAIMED=n; return true; } /* fail open if the database is unreachable */
+}
 async function supaPush(rec){
   const r=await fetch(`${SUPA_URL}/rest/v1/clumpscope`,{method:'POST',
     headers:{...supaHeaders(true),Prefer:'return=minimal'},
@@ -612,9 +623,12 @@ function bumpSummary(s,rec){
   if(!r) SUMMARY.set(s,{s, n:1, mm:rec.m.length, q_mode:rec.q, n_q:1, sd:0, n_marks:rec.m.length, lines:[rec.l]});
   else { r.n=+r.n+1; r.n_marks=+r.n_marks+rec.m.length; (r.lines=r.lines||[]).push(rec.l); }
 }
-function submit(){
+async function submit(){
   if(!cur) return;
   if(!user){ $('uname').focus(); flashBanner('Enter your name (top right) before classifying.'); return; }
+  if(user!==CLAIMED && !(await claimName(user))){
+    user=''; try{localStorage.setItem('cs_user','');}catch(e){}
+    flashBanner('That name is already taken — please choose a different one.'); $('uname').focus(); $('uname').select(); return; }
   const q=document.querySelector('#qopts input:checked');
   if(!q){ flashBanner('Pick a map quality (question 2) before submitting.'); return; }
   const lines=[...document.querySelectorAll('#linegrid input:checked')].map(i=>i.value);
@@ -815,7 +829,13 @@ function showTab(t){ ['about','classify','results'].forEach(k=>{
 function flashBanner(msg){ const b=$('banner'); b.textContent=msg; b.style.display='block';
   clearTimeout(b._t); b._t=setTimeout(()=>b.style.display='none',6000); }
 $('uname').value=user;
-$('uname').addEventListener('change',()=>{ user=$('uname').value.trim(); try{localStorage.setItem('cs_user',user);}catch(e){} updateProgress(); });
+if(user) claimName(user); /* returning visitor re-establishes their claim */
+$('uname').addEventListener('change',async ()=>{
+  const n=$('uname').value.trim();
+  if(!n){ user=''; try{localStorage.setItem('cs_user','');}catch(e){} updateProgress(); return; }
+  if(await claimName(n)){ user=n; try{localStorage.setItem('cs_user',user);}catch(e){} updateProgress(); }
+  else { user=''; try{localStorage.setItem('cs_user','');}catch(e){} flashBanner('That name is already taken — please choose a different one.'); $('uname').focus(); $('uname').select(); }
+});
 window.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
   if($('classify').style.display==='none') return;

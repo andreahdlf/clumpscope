@@ -435,7 +435,7 @@ function renderFrame(ctx,subj,fi,params,marks,selIdx){
   const fr=subj.fr[fi], vals=getTile(subj,fi);
   const isEL=fr.t==='el';
   const p=params[isEL?'el':'bb'];
-  const qf=isEL?p.floor*fr.sq:p.floor*(fr.sq||8);
+  const qf=(p.floor/10)*(isEL?fr.sq:(fr.sq||8));
   const qc=Math.max(qf+2,fr.d98*p.ceil/100);
   const st=stretchVals(vals,qf,qc,p.soft/100);
   let visSt=null,b=0;

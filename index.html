@@ -914,12 +914,19 @@ function commentNode(c,rep,isReply){
   (rep[c.id]||[]).forEach(r=>d.appendChild(commentNode(r,rep,true)));
   return d;
 }
+function hasDraft(box){ /* true if the user is mid-comment inside this box */
+  if(!box) return false; const a=document.activeElement;
+  for(const t of box.querySelectorAll('textarea')){ if(t.value.trim()!==''||t===a) return true; }
+  return false;
+}
 function renderThread(box,s,countEl){
-  if(!box) return; box.innerHTML='';
-  if(s==null){ if(countEl) countEl.textContent=''; return; }
+  if(!box) return;
+  if(s==null){ box.innerHTML=''; delete box.dataset.s; if(countEl) countEl.textContent=''; return; }
   const {roots,rep}=threadsOf(s); roots.sort((a,b)=>+b.t-+a.t);
   const n=roots.reduce((k,r)=>k+1+(rep[r.id]||[]).length,0);
   if(countEl) countEl.textContent=n?'('+n+')':'';
+  if(box.dataset.s===String(s)&&hasDraft(box)) return; /* never wipe a draft being typed */
+  box.dataset.s=String(s); box.innerHTML='';
   if(!roots.length) box.appendChild(el('div','cmempty','No comments on this galaxy yet — seen something odd? Say so here.'));
   roots.forEach(r=>box.appendChild(commentNode(r,rep,false)));
   box.appendChild(commentForm(s,null,null));
@@ -929,7 +936,7 @@ function rerenderComments(){
   if(iSubj!=null) renderThread($('cm-inspect'),iSubj,$('cm-inspect-n'));
   if($('discussion').style.display!=='none') renderDiscussion();
 }
-function setDSort(m){ DSORT=m; $('dsort-pop').className=m==='pop'?'on':''; $('dsort-new').className=m==='new'?'on':''; renderDiscussion(); }
+function setDSort(m){ DSORT=m; $('dsort-pop').className=m==='pop'?'on':''; $('dsort-new').className=m==='new'?'on':''; renderDiscussion(true); }
 function thumbTile(subj,fi,cv){
   const x=cv.getContext('2d'); const vals=getTile(subj,fi); const fr=subj.fr[fi];
   const im=x.createImageData(T,T);
@@ -942,8 +949,10 @@ function thumbTile(subj,fi,cv){
   x.putImageData(im,0,0);
 }
 function openGalaxy(s){ showTab('results'); inspect(s); }
-function renderDiscussion(){
-  const list=$('dlist'); list.innerHTML='';
+function renderDiscussion(force){
+  const list=$('dlist');
+  if(!force&&hasDraft(list)) return; /* never wipe a reply being typed */
+  list.innerHTML='';
   const {roots,rep}=threadsOf(null);
   const score=r=>(+r.votes||0)+(rep[r.id]||[]).length;
   if(DSORT==='pop') roots.sort((a,b)=>(score(b)-score(a))||(+b.t-+a.t)); else roots.sort((a,b)=>+b.t-+a.t);
@@ -967,7 +976,7 @@ function showTab(t){ ['about','classify','results','discussion'].forEach(k=>{
   $('tb-'+k).className = k===t?'on':''; });
   window.scrollTo(0,0);
   if(t==='results'){ refreshSummary().then(renderResults).catch(()=>{}); renderResults(); }
-  if(t==='discussion'){ renderDiscussion(); loadComments(true).then(renderDiscussion); }
+  if(t==='discussion'){ renderDiscussion(); loadComments(true).then(()=>renderDiscussion()); }
 }
 function flashBanner(msg){ const b=$('banner'); b.textContent=msg; b.style.display='block';
   clearTimeout(b._t); b._t=setTimeout(()=>b.style.display='none',6000); }

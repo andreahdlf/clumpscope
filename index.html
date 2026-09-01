@@ -105,6 +105,26 @@ tbody tr:hover{background:var(--panel2)}
 dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;max-width:680px;width:92%;padding:18px}
 dialog::backdrop{background:rgba(4,8,18,.7)}
 footer{max-width:1180px;margin:30px auto 0;padding:14px 22px;border-top:1px solid var(--line);font-size:12.5px;color:var(--faint)}
+#discussion{display:none}
+.cm{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;background:var(--inset);font-size:13px}
+.cm.reply{margin-left:22px;background:transparent}
+.cm .who{font-weight:600;color:var(--text)}
+.cm .when{color:var(--faint);font-size:11.5px;margin-left:8px}
+.cm .body{margin:4px 0 6px;white-space:pre-wrap;word-break:break-word;color:#c8d1e0}
+.cm .acts{display:flex;gap:6px;align-items:center}
+.cm .acts button{padding:2px 9px;font-size:12px}
+.cm .acts button.voted{border-color:var(--accent);color:var(--accent)}
+.cmform{margin:6px 0}
+.cmform textarea{width:100%;background:var(--inset);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:7px 9px;font:13px/1.4 'IBM Plex Sans',sans-serif;resize:vertical;min-height:46px}
+.cmform .row{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:6px}
+.cmform .row button{padding:5px 12px;font-size:12.5px}
+.cmempty{font-size:12.5px;color:var(--faint);margin:4px 0 8px}
+.dcard{display:grid;grid-template-columns:96px 1fr;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;align-items:start}
+.dcard canvas{width:96px;height:96px;border-radius:6px;cursor:pointer;display:block;background:#000}
+.dcard .gid{font-family:var(--mono);font-size:12px;color:var(--accent);cursor:pointer;margin-bottom:4px;display:inline-block}
+.dcard .gid:hover{text-decoration:underline}
+#dsort-pop.on,#dsort-new.on{border-color:var(--accent);color:var(--accent)}
+@media(max-width:640px){.dcard{grid-template-columns:64px 1fr;gap:10px}.dcard canvas{width:64px;height:64px}.cm.reply{margin-left:12px}}
 #delmark{position:absolute;right:10px;bottom:10px;display:none;background:rgba(226,109,109,.92);border:none;color:#fff;font-weight:600;font-size:13.5px;padding:9px 14px;border-radius:8px;z-index:5;box-shadow:0 2px 10px rgba(0,0,0,.45)}
 input[type=range]{-webkit-appearance:none;appearance:none;height:30px;background:transparent;padding:0;margin:0}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--inset);border:1px solid var(--line)}
@@ -150,6 +170,7 @@ body{overflow-x:clip}
     <button id="tb-about" class="on" onclick="showTab('about')">About</button>
     <button id="tb-classify" onclick="showTab('classify')">Classify</button>
     <button id="tb-results" onclick="showTab('results')">Results</button>
+    <button id="tb-discussion" onclick="showTab('discussion')">Discussion</button>
   </nav>
   <div id="userbox">
     <label for="uname" style="font-size:12.5px;color:var(--muted)">Classifying as</label>
@@ -262,8 +283,12 @@ body{overflow-x:clip}
         <div id="linegrid"></div>
       </div>
       <div class="step">
-        <h3>Notes <span style="color:var(--faint);font-weight:400">(optional)</span></h3>
+        <h3>Notes <span style="color:var(--faint);font-weight:400">(optional, seen only by the research team)</span></h3>
         <textarea id="notes" rows="1" placeholder="mergers, oddities, doubts…"></textarea>
+      </div>
+      <div class="step">
+        <h3>Discussion <span id="cm-classify-n" style="color:var(--faint);font-weight:400"></span></h3>
+        <div id="cm-classify"></div>
       </div>
       <div>
         <div class="submitrow">
@@ -303,6 +328,7 @@ body{overflow-x:clip}
         <div><b style="color:var(--text)">Quality consensus</b> — the most common answer to "How is the Hα map?" (Clean / Noisy / Artifact / Unusable).</div>
         <div><b style="color:var(--text)">Disagreement</b> — 0 to 1: how much classifiers differ on this galaxy, combining the spread in their circle counts with how split the quality votes are. Shown once a galaxy has 2+ classifications; high values (red) mark galaxies worth a second look — tick "Sort by disagreement" to review those first.</div>
         <div><b style="color:var(--text)">Lines ticked</b> — the other emission lines people have reported seeing (up to the three most-ticked).</div>
+        <div><b style="color:var(--text)">Discussion</b> — click a galaxy row to open it; underneath everyone's circles you can read and leave comments about that galaxy. All comments are collected in the Discussion tab.</div>
         <div style="margin-top:4px"><b style="color:var(--text)">The downloads</b> (research team only, after sign-in):</div>
         <div><b style="color:var(--text)">Classifications CSV</b> — one row per submitted classification: classifier name, quality answer, lines ticked, number of circles, notes, timestamp, plus the galaxy&#8217;s redshift and coordinates (included only in the signed-in exports, never shown on the site).</div>
         <div><b style="color:var(--text)">Marks CSV</b> — one row per individual circle: which frame it was drawn on, the centre in 101-px stamp coordinates (col = x+20, row = 61−y+20, origin bottom-left), and the radius in pixels and arcsec.</div>
@@ -328,8 +354,21 @@ body{overflow-x:clip}
       <div class="task">
         <h3 id="i-title">Inspect</h3>
         <div id="i-detail" style="font-size:13px;color:#c8d1e0;display:flex;flex-direction:column;gap:8px"></div>
+        <h3 style="margin-top:14px">Discussion <span id="cm-inspect-n" style="color:var(--faint);font-weight:400"></span></h3>
+        <div id="cm-inspect"></div>
       </div>
     </div>
+  </section>
+  <section id="discussion">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+      <h2 style="margin:0;font-size:21px">Discussion</h2>
+      <span style="font-size:13px;color:var(--muted)" id="dcount"></span>
+      <span style="margin-left:auto;display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)">Sort
+        <button id="dsort-pop" class="on" onclick="setDSort('pop')">Popular</button>
+        <button id="dsort-new" onclick="setDSort('new')">Newest</button></span>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Every comment left on a galaxy ends up here. Click a galaxy to open it in Results, reply to start a thread, and use ▲ to upvote comments worth seeing.</p>
+    <div id="dlist"></div>
   </section>
 </main>
 <footer>ClumpScope · Euclid Hα star-forming clumps · University of Oxford — thank you for classifying.</footer>
@@ -538,6 +577,8 @@ async function loadSubject(idx){
   drawStrip($('strip'),cur,0,setFrame);
   setFrame(0);
   updateProgress();
+  renderThread($('cm-classify'),curIdx,$('cm-classify-n'));
+  loadComments().then(()=>{ if(curIdx===idx) renderThread($('cm-classify'),curIdx,$('cm-classify-n')); });
 }
 function updateProgress(){
   const total=SUBJ.length*RETIRE;
@@ -699,6 +740,8 @@ async function inspect(s){
   });
   $('i-detail').innerHTML=det.join('');
   ipaint();
+  renderThread($('cm-inspect'),s,$('cm-inspect-n'));
+  loadComments().then(()=>{ if(iSubj===s) renderThread($('cm-inspect'),s,$('cm-inspect-n')); });
   $('inspect').scrollIntoView({behavior:'smooth'});
 }
 function ipaint(){
@@ -819,12 +862,112 @@ document.querySelectorAll('.dlbtn').forEach(b=>b.onclick=()=>{
   if(TOKEN) doDownload(b.dataset.kind);
   else { pendingDl=b.dataset.kind; $('lerr').style.display='none'; $('logindlg').showModal(); $('lemail').focus(); }
 });
+/* ================= discussion ================= */
+let COMMENTS=[], CM_AT=0, DSORT='pop';
+let VOTED=new Set(); try{ VOTED=new Set(JSON.parse(localStorage.getItem('cs_voted')||'[]')); }catch(e){}
+async function loadComments(force){
+  if(!force && Date.now()-CM_AT<30000) return COMMENTS;
+  try{ COMMENTS=await rpc('list_comments'); CM_AT=Date.now(); }catch(e){}
+  return COMMENTS;
+}
+function fmtAgo(t){ const d=(Date.now()-t)/1000;
+  if(d<60) return 'just now'; if(d<3600) return Math.floor(d/60)+' min ago';
+  if(d<86400) return Math.floor(d/3600)+' h ago'; if(d<86400*30) return Math.floor(d/86400)+' d ago';
+  return new Date(t).toLocaleDateString(); }
+function threadsOf(s){
+  const roots=COMMENTS.filter(c=>c.parent==null&&(s==null||+c.s===+s));
+  const rep={}; COMMENTS.forEach(c=>{ if(c.parent!=null){ (rep[c.parent]=rep[c.parent]||[]).push(c); } });
+  Object.values(rep).forEach(a=>a.sort((x,y)=>+x.t-+y.t));
+  return {roots,rep};
+}
+function el(tag,cls,text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+function commentForm(s,parent,onDone,placeholder){
+  const f=el('div','cmform'); const ta=el('textarea'); ta.maxLength=1000; ta.placeholder=placeholder||'Add a comment about this galaxy…';
+  const row=el('div','row'); const hint=el('span','',''); hint.style.cssText='font-size:11.5px;color:var(--faint);margin-right:auto';
+  hint.textContent=user?('posting as '+user):'enter your name (top right) to comment';
+  const b=el('button','primary',parent?'Reply':'Post comment');
+  b.onclick=async()=>{ const body=ta.value.trim(); if(!body) return;
+    if(!user){ flashBanner('Enter your name (top right) before commenting.'); $('uname').focus(); return; }
+    if(user!==CLAIMED && !(await claimName(user))){ user=''; flashBanner('That name is already taken — please choose a different one.'); $('uname').focus(); return; }
+    b.disabled=true;
+    try{ await rpc('post_comment',{p_name:user,p_token:NTOK,p_s:+s,p_sid:SUBJ[s].sid,p_parent:parent==null?null:+parent,p_body:body});
+      ta.value=''; await loadComments(true); rerenderComments(); if(onDone) onDone(); }
+    catch(e){ flashBanner('Could not post the comment — check your connection and name, then try again.'); }
+    b.disabled=false; };
+  row.appendChild(hint); row.appendChild(b); f.appendChild(ta); f.appendChild(row); return f;
+}
+function commentNode(c,rep,isReply){
+  const d=el('div','cm'+(isReply?' reply':''));
+  const h=el('div'); h.appendChild(el('span','who',c.u)); h.appendChild(el('span','when',fmtAgo(+c.t))); d.appendChild(h);
+  d.appendChild(el('div','body',c.body));
+  const acts=el('div','acts');
+  const vb=el('button',VOTED.has(+c.id)?'voted':'','▲ '+(+c.votes||0)); vb.title='Upvote';
+  vb.onclick=async()=>{ if(VOTED.has(+c.id)) return;
+    try{ const n=await rpc('vote_comment',{p_cid:+c.id,p_token:NTOK}); VOTED.add(+c.id);
+      try{localStorage.setItem('cs_voted',JSON.stringify([...VOTED]));}catch(e){}
+      c.votes=n; vb.textContent='▲ '+n; vb.className='voted'; }catch(e){} };
+  acts.appendChild(vb);
+  if(!isReply){ const rb=el('button','','Reply'); let open=null;
+    rb.onclick=()=>{ if(open){ open.remove(); open=null; return; } open=commentForm(c.s,c.id,()=>{open=null;},'Write a reply…'); d.appendChild(open); open.querySelector('textarea').focus(); };
+    acts.appendChild(rb); }
+  d.appendChild(acts);
+  (rep[c.id]||[]).forEach(r=>d.appendChild(commentNode(r,rep,true)));
+  return d;
+}
+function renderThread(box,s,countEl){
+  if(!box) return; box.innerHTML='';
+  if(s==null){ if(countEl) countEl.textContent=''; return; }
+  const {roots,rep}=threadsOf(s); roots.sort((a,b)=>+b.t-+a.t);
+  const n=roots.reduce((k,r)=>k+1+(rep[r.id]||[]).length,0);
+  if(countEl) countEl.textContent=n?'('+n+')':'';
+  if(!roots.length) box.appendChild(el('div','cmempty','No comments on this galaxy yet — seen something odd? Say so here.'));
+  roots.forEach(r=>box.appendChild(commentNode(r,rep,false)));
+  box.appendChild(commentForm(s,null,null));
+}
+function rerenderComments(){
+  if(cur) renderThread($('cm-classify'),curIdx,$('cm-classify-n'));
+  if(iSubj!=null) renderThread($('cm-inspect'),iSubj,$('cm-inspect-n'));
+  if($('discussion').style.display!=='none') renderDiscussion();
+}
+function setDSort(m){ DSORT=m; $('dsort-pop').className=m==='pop'?'on':''; $('dsort-new').className=m==='new'?'on':''; renderDiscussion(); }
+function thumbTile(subj,fi,cv){
+  const x=cv.getContext('2d'); const vals=getTile(subj,fi); const fr=subj.fr[fi];
+  const im=x.createImageData(T,T);
+  const qf=fr.sq*1.0, qc=fr.d98, a=fr.t==='el'?0.3:0.05, inva=1/Math.asinh(1/a);
+  for(let i=0;i<T*T;i++){ let n=(vals[i]-qf)/(qc-qf); n=n<0?0:(n>1?1:n);
+    const y=Math.asinh(n/a)*inva, j=(y*255)|0, o=i*4;
+    if(fr.t==='el'){const v=j*3; im.data[o]=VIRIDIS[v]; im.data[o+1]=VIRIDIS[v+1]; im.data[o+2]=VIRIDIS[v+2];}
+    else{im.data[o]=j;im.data[o+1]=j;im.data[o+2]=j;}
+    im.data[o+3]=255; }
+  x.putImageData(im,0,0);
+}
+function openGalaxy(s){ showTab('results'); inspect(s); }
+function renderDiscussion(){
+  const list=$('dlist'); list.innerHTML='';
+  const {roots,rep}=threadsOf(null);
+  const score=r=>(+r.votes||0)+(rep[r.id]||[]).length;
+  if(DSORT==='pop') roots.sort((a,b)=>(score(b)-score(a))||(+b.t-+a.t)); else roots.sort((a,b)=>+b.t-+a.t);
+  const total=COMMENTS.length;
+  $('dcount').textContent=total?(roots.length+' thread'+(roots.length!==1?'s':'')+' · '+total+' comment'+(total!==1?'s':'')):'';
+  if(!roots.length){ list.appendChild(el('div','cmempty','No comments yet. Leave one under any galaxy in Classify or Results and it will show up here.')); return; }
+  roots.forEach(r=>{
+    const subj=SUBJ[+r.s]; if(!subj) return;
+    const card=el('div','dcard');
+    const cv=el('canvas'); cv.width=T; cv.height=T; cv.title='Open galaxy '+subj.sid; cv.onclick=()=>openGalaxy(+r.s);
+    ensureAtlas(subj.a).then(()=>thumbTile(subj,0,cv)).catch(()=>{});
+    card.appendChild(cv);
+    const right=el('div'); const gid=el('span','gid','Galaxy '+subj.sid+' ↗'); gid.onclick=()=>openGalaxy(+r.s); right.appendChild(gid);
+    right.appendChild(commentNode(r,rep,false));
+    card.appendChild(right); list.appendChild(card);
+  });
+}
 /* ================= tabs / misc ================= */
-function showTab(t){ ['about','classify','results'].forEach(k=>{
+function showTab(t){ ['about','classify','results','discussion'].forEach(k=>{
   $(k).style.display = k===t ? (k==='classify'?'grid':'block') : 'none';
   $('tb-'+k).className = k===t?'on':''; });
   window.scrollTo(0,0);
   if(t==='results'){ refreshSummary().then(renderResults).catch(()=>{}); renderResults(); }
+  if(t==='discussion'){ renderDiscussion(); loadComments(true).then(renderDiscussion); }
 }
 function flashBanner(msg){ const b=$('banner'); b.textContent=msg; b.style.display='block';
   clearTimeout(b._t); b._t=setTimeout(()=>b.style.display='none',6000); }
@@ -858,6 +1001,7 @@ async function boot(){
   loadSubject(pickSubject());
   renderResults();
   setInterval(()=>{ refreshSummary().then(()=>{ updateProgress(); if($('results').style.display!=='none') renderResults(); }).catch(()=>{}); }, 90000);
+  setInterval(()=>{ loadComments(true).then(rerenderComments); }, 60000);
 }
 boot();
 </script>

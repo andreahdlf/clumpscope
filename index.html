@@ -74,11 +74,6 @@ h2:first-child{margin-top:0}
 .qopt{display:block;margin:4px 0;padding:7px 10px;border:1px solid var(--line);border-radius:7px;cursor:pointer;font-size:13.5px}
 .qopt:has(input:checked){border-color:var(--accent);background:rgba(232,168,85,.08)}
 .qopt input{accent-color:var(--accent);margin-right:8px}
-#linegrid{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;font-size:12.5px}
-#linegrid label{display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:5px;cursor:pointer;color:#c8d1e0}
-#linegrid label:hover{background:var(--panel2)}
-#linegrid input{accent-color:var(--accent)}
-#linegrid label.none{grid-column:1/-1;border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin-top:4px}
 #notes{width:100%;background:var(--inset);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:7px 9px;font:13px/1.4 'IBM Plex Sans',sans-serif;resize:vertical;min-height:34px}
 .submitrow{display:flex;gap:10px;align-items:center}
 .submitrow .primary{flex:1;padding:11px}
@@ -208,14 +203,14 @@ body{overflow-x:clip}
     </div>
     <figure style="margin:6px 0 16px">
       <img src="about_multiline.png" alt="The same galaxy shown in Hα, [SII], [SIII] 9069, [SIII] 9531 and the VIS starlight image — emission visible at the same position in each line map" style="max-width:100%;border-radius:8px;display:block">
-      <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Emission in several lines.</strong> One galaxy seen in Hα, [SII] and both [SIII] maps — the emission sits at the same position as the starlight (VIS, right). This is what to tick in question 3, and you can circle clumps on those frames too.</figcaption>
+      <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Emission in several lines.</strong> One galaxy seen in Hα, [SII] and both [SIII] maps — the emission sits at the same position as the starlight (VIS, right). Circle the clumps in each line map where you see them — your circles record which lines the galaxy shines in, so there is no separate question to answer.</figcaption>
     </figure>
     <h2>Why we need you</h2>
     <p>An automated algorithm has already searched the Hα maps for clumps, but the maps are noisy, and no algorithm perfectly separates real clumps from noise peaks and instrumental artifacts. Human eyes are still better at this.</p>
     <p>Your marks are used in two ways. First, to check the automated catalogue: where several people independently circle the same spot, we can trust the detection; where nobody does, it was probably noise. Second, the marks become a training set for machine-learning clump finders, which need many examples of what people judge to be real. Along the way you may notice things no algorithm flags such as emission in unexpected lines, artifacts, mergers, oddities. Those are often the most interesting objects of all.</p>
     <h2>How to classify — a quick tutorial</h2>
     <p><strong>Step 1 — Find the galaxy.</strong> Flip to the last two greyscale frames (VIS and NISP-Y) to see where the galaxy sits, then come back to the Hα frame. Real clumps sit <em>on</em> the galaxy, so knowing where it is makes everything easier. The VIS blend slider fades the starlight image in underneath the Hα map if you want to see both at once.</p>
-    <p><strong>Step 2 — Circle every clump.</strong> A clump is a compact bright knot that sits on the galaxy and stands out from its surroundings. Press on the centre of a knot and drag outward until the circle wraps around it. Drag a circle to move it, drag its rim to resize it, and tap it and press ✕ to delete it. You can draw circles on <em>any</em> emission-line frame, not only Hα — every circle records which map it was drawn on.</p>
+    <p><strong>Step 2 — Circle every clump.</strong> A clump is a compact bright knot that sits on the galaxy and stands out from its surroundings. Press on the centre of a knot and drag outward until the circle wraps around it. Drag a circle to move it, drag its rim to resize it, and tap it and press ✕ to delete it. You can draw circles on <em>any</em> emission-line frame, not only Hα — every circle records which map it was drawn on. This is also how you tell us which lines the galaxy shows emission in: if the same clump is visible in Hα, [SII] and [SIII], circle it in all three maps and the galaxy is registered as emitting in all three lines.</p>
     <figure style="margin:16px 0;max-width:305px">
       <img src="tut_circles.png" alt="A galaxy in Hα with two bright knots, each marked with a red circle" style="width:100%;border-radius:8px;display:block">
       <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Circle these.</strong> Two clumps, two circles — each bright knot gets its own. This is what a finished classification looks like.</figcaption>
@@ -231,7 +226,7 @@ body{overflow-x:clip}
         <figcaption style="font-size:12.5px;color:var(--muted);margin-top:6px"><strong>Not this either.</strong> A diagonal streak is contamination, not emission — pick "Artifact present" instead.</figcaption>
       </figure>
     </div>
-    <p><strong>Step 4 — Answer the two questions.</strong> Rate the Hα map (clean, noisy-but-usable, artifact-contaminated, or unusable), and tick any other line where you see emission at the galaxy's position. Leaving boxes unticked is normal.</p>
+    <p><strong>Step 4 — Rate the Hα map.</strong> Pick clean, noisy-but-usable, artifact-contaminated, or unusable. There is no separate question about the other emission lines — your circles already carry that information, so make sure you have circled the clumps in every line map where you can see them.</p>
     <p><strong>Step 5 — Submit.</strong> If you see no clumps, that is a perfectly good answer — press <em>Submit &amp; next</em> without drawing anything. If you are unsure, give it your best guess; several people see every image, so no single answer decides anything.</p>
     <p><strong>The contrast controls are yours.</strong> Faint clumps often appear when you lower the floor or raise the softness; hard stretches sharpen bright knots. The <strong>VIS blend</strong> slider fades the starlight image in under any emission-line frame, so you can check that a knot really sits on the galaxy. Adjusting these affects only your view, never the data.</p>
     <h2>Shortcuts</h2>
@@ -242,7 +237,7 @@ body{overflow-x:clip}
     <p><strong>What if I don't see any clumps?</strong><br>That is a perfectly good answer. Press <em>Submit &amp; next</em> without drawing anything — knowing that a galaxy has no visible clumps is just as useful to us as marking ten of them.</p>
     <p><strong>Why do the images look so grainy?</strong><br>The emission-line maps are built from slitless spectroscopy of faint galaxies, so they are inherently noisy. Isolated bright specks scattered around the frame are noise; real clumps sit on the galaxy and stand out from their surroundings.</p>
     <p><strong>What are the long diagonal streaks?</strong><br>Contamination from the spectra of other objects in the field — an instrumental artifact, not emission. If one crosses a map, pick "Artifact present" in the quality question.</p>
-    <p><strong>Why does the answer list include lines the galaxy doesn't have?</strong><br>Every galaxy gets the same fixed list, covering all the lines the survey can capture. Depending on a galaxy's redshift, only some of those lines land in Euclid's wavelength range, so most galaxies only have maps for a few. Leave the rest unticked.</p>
+    <p><strong>How do I report emission in lines other than Hα?</strong><br>By circling. Each circle records which map it was drawn on, so circling a clump in the Hα, [SII] and [SIII] maps registers the galaxy as showing emission in all three lines — there is no separate checklist. If a line map clearly shows the galaxy's emission, circle it there even when it is the same clump you already circled in Hα; that is how it gets counted.</p>
     <p><strong>How many people look at each galaxy?</strong><br>Five, for now. A galaxy is retired once it has been classified five times, and we compare all five answers when we build the final catalogue.</p>
     <p><strong>What happens with my classifications?</strong><br>They are used to verify an automatically produced clump catalogue and to train machine-learning models to find clumps in Hα maps. The results will feed into a scientific publication on star-forming clumps in Euclid galaxies; volunteers' contributions will be acknowledged.</p>
     <p style="margin:22px 0 8px"><button class="primary" onclick="showTab('classify')" style="font-size:16px;padding:13px 34px">Classify now</button></p>
@@ -271,16 +266,12 @@ body{overflow-x:clip}
     </div>
     <div class="task">
       <div class="step">
-        <h3>1 · Circle every clump <span style="color:var(--faint);font-weight:400">(drag on the image — usually on Hα)</span></h3>
+        <h3>1 · Circle every clump <span style="color:var(--faint);font-weight:400">(drag on the image — in every line map where you see one)</span></h3>
         <div id="marklist"><span style="color:var(--faint);font-size:13px" id="nomarks">No circles yet. If you see no clumps, that's a valid answer.</span></div>
       </div>
       <div class="step">
         <h3>2 · How is the Hα map?</h3>
         <div id="qopts"></div>
-      </div>
-      <div class="step">
-        <h3>3 · Emission in other lines? <span style="color:var(--faint);font-weight:400">(tick all that apply)</span></h3>
-        <div id="linegrid"></div>
       </div>
       <div class="step">
         <h3>Notes <span style="color:var(--faint);font-weight:400">(optional, seen only by the research team)</span></h3>
@@ -327,10 +318,10 @@ body{overflow-x:clip}
         <div><b style="color:var(--text)">Circles (med)</b> — the median number of circles drawn per classification: a robust estimate of how many clumps people see.</div>
         <div><b style="color:var(--text)">Quality consensus</b> — the most common answer to "How is the Hα map?" (Clean / Noisy / Artifact / Unusable).</div>
         <div><b style="color:var(--text)">Disagreement</b> — 0 to 1: how much classifiers differ on this galaxy, combining the spread in their circle counts with how split the quality votes are. Shown once a galaxy has 2+ classifications; high values (red) mark galaxies worth a second look — tick "Sort by disagreement" to review those first.</div>
-        <div><b style="color:var(--text)">Lines ticked</b> — the other emission lines people have reported seeing (up to the three most-ticked).</div>
+        <div><b style="color:var(--text)">Lines</b> — the emission lines in which people have circled clumps (up to the three most-reported).</div>
         <div><b style="color:var(--text)">Discussion</b> — click a galaxy row to open it; underneath everyone's circles you can read and leave comments about that galaxy. All comments are collected in the Discussion tab.</div>
         <div style="margin-top:4px"><b style="color:var(--text)">The downloads</b> (research team only, after sign-in):</div>
-        <div><b style="color:var(--text)">Classifications CSV</b> — one row per submitted classification: classifier name, quality answer, lines ticked, number of circles, notes, timestamp, plus the galaxy&#8217;s redshift and coordinates (included only in the signed-in exports, never shown on the site).</div>
+        <div><b style="color:var(--text)">Classifications CSV</b> — one row per submitted classification: classifier name, quality answer, lines with circled clumps, number of circles, notes, timestamp, plus the galaxy&#8217;s redshift and coordinates (included only in the signed-in exports, never shown on the site).</div>
         <div><b style="color:var(--text)">Marks CSV</b> — one row per individual circle: which frame it was drawn on, the centre in 101-px stamp coordinates (col = x+20, row = 61−y+20, origin bottom-left), and the radius in pixels and arcsec.</div>
         <div><b style="color:var(--text)">Consensus catalogue CSV</b> — circles from different people are clustered, and clusters marked by at least two distinct classifiers are kept: one row per agreed clump with the mean centre and radius plus agreement counts, ready to compare against the automated catalogue.</div>
         <div><b style="color:var(--text)">ML labels CSV</b> — the same consensus clumps written as YOLO-style normalised bounding boxes, ready to train a machine-learning clump finder.</div>
@@ -340,7 +331,7 @@ body{overflow-x:clip}
       <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="sortdis" style="accent-color:var(--accent);margin-right:6px">Sort by disagreement (review contentious galaxies first)</label>
     </div>
     <div class="tablewrap"><table>
-      <thead><tr><th>Galaxy</th><th>Hα</th><th>Class.</th><th>Circles (med)</th><th>Quality consensus</th><th>Disagreement</th><th>Lines ticked</th></tr></thead>
+      <thead><tr><th>Galaxy</th><th>Hα</th><th>Class.</th><th>Circles (med)</th><th>Quality consensus</th><th>Disagreement</th><th>Lines</th></tr></thead>
       <tbody id="rtable"></tbody>
     </table></div>
     <div id="inspect">
@@ -548,23 +539,9 @@ function setFrame(fi){ curFi=fi; const fr=cur.fr[fi]; if(document.getElementById
   syncCtl(); paint();
 }
 function paint(){ if(cur) renderFrame(vctx,cur,curFi,params,marks,selMark); }
-function buildLineGrid(subj){
-  const box=$('linegrid'); box.innerHTML='';
-  if(!subj) return;
-  const seen=new Set();
-  subj.fr.forEach((fr,fi)=>{ if(fi===0||fr.t!=='el'||seen.has(fr.lb)) return;
-    seen.add(fr.lb);
-    const l=document.createElement('label');
-    l.innerHTML=`<input type="checkbox" value="${fr.lb}">${fr.lb}`;
-    box.appendChild(l); });
-  const l=document.createElement('label'); l.className='none';
-  l.innerHTML=`<input type="checkbox" id="noneopt" value="${NONE_OPT}">${NONE_OPT}`;
-  box.appendChild(l);
-}
 async function loadSubject(idx){
   cur=idx==null?null:SUBJ[idx]; curIdx=idx; marks=[]; selMark=-1;
   document.querySelectorAll('#qopts input').forEach(i=>i.checked=false);
-  buildLineGrid(cur);
   $('notes').value='';
   renderMarklist();
   if(!cur){ $('frname').textContent='Every galaxy is fully classified — thank you! 🎉'; $('frmeta').textContent=''; $('frcount').textContent='';
@@ -651,12 +628,6 @@ $('nextf').onclick=()=>{ if(cur){ setFrame((curFi+1)%cur.fr.length); } };
 $('qopts').innerHTML='';
 QUALITIES.forEach((q,i)=>{ const l=document.createElement('label'); l.className='qopt';
   l.innerHTML=`<input type="radio" name="q" value="${i}">${q}`; $('qopts').appendChild(l); });
-$('linegrid').addEventListener('change',e=>{
-  const none=$('noneopt');
-  if(!none) return;
-  if(e.target===none&&none.checked) document.querySelectorAll('#linegrid input:not(#noneopt)').forEach(i=>i.checked=false);
-  else if(e.target.checked) none.checked=false;
-});
 $('skip').onclick=()=>{ if(curIdx!=null) loadSubject(pickSubject(curIdx)); };
 $('submit').onclick=submit;
 function bumpSummary(s,rec){
@@ -672,7 +643,12 @@ async function submit(){
     flashBanner('That name is already taken — please choose a different one.'); $('uname').focus(); $('uname').select(); return; }
   const q=document.querySelector('#qopts input:checked');
   if(!q){ flashBanner('Pick a map quality (question 2) before submitting.'); return; }
-  const lines=[...document.querySelectorAll('#linegrid input:checked')].map(i=>i.value);
+  /* emission lines are derived from the circles: each mark records the frame it
+     was drawn on, so the set of distinct emission-line labels among marked frames
+     is the set of lines the classifier saw emission in */
+  const lineSet=new Set();
+  marks.forEach(m=>{ const fr=cur.fr[m.f]; if(fr&&fr.t==='el') lineSet.add(fr.lb); });
+  const lines=[...lineSet];
   const rec={u:user, s:curIdx, sid:cur.sid, q:+q.value, l:lines,
     m:marks.map(m=>[m.f,+m.x.toFixed(2),+m.y.toFixed(2),+m.r.toFixed(2)]),
     n:$('notes').value.trim().slice(0,300), t:Date.now()};
